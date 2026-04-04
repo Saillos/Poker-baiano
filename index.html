@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Bettle Trinca - Oficial</title>
+    <style>
+        :root { --bg: #0f172a; --accent: #8e44ad; --win: #2ecc71; --loss: #e74c3c; }
+        body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; margin: 0; padding-bottom: 50px; overflow-x: hidden; }
+
+        .global-wins {
+            position: absolute; top: 20px; right: 20px; background: #1e293b;
+            padding: 20px 30px; border-radius: 12px; border: 2px solid #334155;
+            font-size: 18px; z-index: 1000; text-align: center; font-weight: bold;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+        }
+        .global-wins span { font-size: 28px; color: var(--win); display: block; margin-top: 5px; }
+
+        .top-bar { display: flex; gap: 20px; align-items: center; margin: 25px; z-index: 1000; }
+        .btn-ui { background: #1e293b; color: white; border: 1px solid #334155; padding: 8px 18px; cursor: pointer; border-radius: 5px; font-weight: bold; font-size: 10px; text-transform: uppercase; transition: 0.2s; }
+        .btn-ui:hover { background: var(--accent); }
+
+        .status-msg { font-size: 1.6em; font-weight: bold; min-width: 320px; text-align: center; text-transform: uppercase; transition: 0.3s; }
+        .status-your { color: var(--win); text-shadow: 0 0 10px rgba(46, 204, 113, 0.3); }
+        .status-opp { color: #f1c40f; }
+        .status-waiting { color: #ffffff; opacity: 0.6; }
+
+        .game-world { display: flex; align-items: center; gap: 60px; margin-top: 10px; position: relative; }
+        .row { display: grid; grid-template-columns: repeat(5, 110px); gap: 15px; margin: 15px 0; position: relative; }
+
+        .slot {
+            width: 110px; height: 170px; border: 2px solid #1e293b; border-radius: 12px;
+            background: rgba(255,255,255,0.02); position: relative; cursor: pointer;
+            transition: 0.2s; z-index: 10;
+        }
+        .slot:hover { background: rgba(142, 68, 173, 0.1); border-color: var(--accent); }
+        .slot[data-col="0"] { border: 2px dashed var(--accent); }
+
+        .round-markers { display: flex; flex-direction: column; gap: 12px; position: absolute; left: -45px; height: 100%; justify-content: center; pointer-events: none; }
+        .dot { width: 14px; height: 14px; background: #1e293b; border-radius: 50%; border: 2px solid #334155; }
+        .dot.active { background: var(--win); border-color: #fff; box-shadow: 0 0 12px var(--win); }
+
+        .card-body {
+            width: 90px; height: 125px; background: white; color: black; border-radius: 8px;
+            padding: 10px; box-sizing: border-box; border: 1px solid #999; display: flex;
+            flex-direction: column; position: absolute; left: 8px;
+            box-shadow: 0 5px 10px rgba(0,0,0,0.4); pointer-events: none;
+        }
+        .card-info { display: flex; justify-content: space-between; font-weight: 900; font-size: 1.5em; line-height: 0.9; }
+        .red { color: #e74c3c !important; }
+
+        .card-back {
+            background: #1e293b !important; border: 2px solid #64748b !important; color: transparent !important;
+            background-image: radial-gradient(circle, #334155 1px, transparent 1px) !important;
+            background-size: 8px 8px !important; box-shadow: none !important;
+        }
+        .joker-card { background: #f1c40f !important; }
+
+        #hand-area { width: 100%; display: flex; justify-content: center; margin-top: 40px; padding: 20px; background: rgba(0,0,0,0.2); position: relative; z-index: 1000; }
+        #hand { display: flex; gap: 15px; min-height: 140px; }
+        .hand-card { cursor: pointer !important; transition: 0.3s; position: relative; pointer-events: auto !important; }
+        .hand-card.selected { transform: translateY(-25px); outline: 4px solid var(--win); box-shadow: 0 0 20px var(--win); }
+
+        .guide-section { margin-top: 60px; border-top: 1px solid #334155; padding: 30px; width: 95%; background: rgba(15,23,42,0.5); }
+        .combo-grid { display: flex; gap: 30px; justify-content: center; margin-top: 30px; flex-wrap: wrap; }
+        .mini-slot { width: 95px; height: 150px; position: relative; border: 1px solid #334155; border-radius: 8px; background: rgba(0,0,0,0.3); }
+
+        #end-game-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center; flex-direction: column; }
+
+        /* Lobby */
+        #lobby-overlay { display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 3000; justify-content: center; align-items: center; flex-direction: column; }
+        .lobby-box { background: #1e293b; padding: 40px 50px; border-radius: 16px; border: 2px solid #334155; text-align: center; max-width: 400px; width: 90%; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+        .lobby-box h1 { margin: 0 0 8px; font-size: 2em; color: var(--accent); }
+        .lobby-box p { color: #94a3b8; margin: 0 0 30px; font-size: 0.9em; }
+        .lobby-btn { display: block; width: 100%; padding: 16px; margin: 12px 0; font-size: 1.1em; font-weight: bold; border: none; border-radius: 10px; cursor: pointer; text-transform: uppercase; transition: 0.2s; }
+        .lobby-btn-create { background: var(--accent); color: white; }
+        .lobby-btn-create:hover { background: #a855f7; }
+        .lobby-btn-join { background: transparent; color: white; border: 2px solid #334155; }
+        .lobby-btn-join:hover { border-color: var(--accent); color: var(--accent); }
+        #lobby-step-2 { display: none; }
+        .room-code-display { font-size: 2.5em; font-weight: 900; letter-spacing: 10px; color: var(--win); background: rgba(46,204,113,0.1); padding: 15px 25px; border-radius: 12px; margin: 20px 0; font-family: monospace; }
+        .lobby-input { width: 100%; padding: 14px; font-size: 1.3em; font-weight: bold; text-align: center; letter-spacing: 6px; border: 2px solid #334155; border-radius: 10px; background: #0f172a; color: white; box-sizing: border-box; text-transform: uppercase; font-family: monospace; }
+        .lobby-input:focus { outline: none; border-color: var(--accent); }
+        .lobby-input::placeholder { letter-spacing: 2px; font-size: 0.7em; color: #475569; }
+        .lobby-back { background: none; border: none; color: #64748b; cursor: pointer; margin-top: 15px; font-size: 0.9em; }
+        .lobby-back:hover { color: white; }
+        .lobby-status { color: #f1c40f; margin-top: 15px; font-size: 0.9em; min-height: 24px; }
+        .lobby-error { color: var(--loss); }
+        .room-code-header { position: absolute; top: 20px; left: 20px; background: #1e293b; padding: 10px 20px; border-radius: 8px; border: 1px solid #334155; font-size: 12px; color: #64748b; text-transform: uppercase; z-index: 1000; }
+        .room-code-header span { color: var(--win); font-weight: bold; font-size: 16px; letter-spacing: 3px; font-family: monospace; }
+
+        #game-container { display: none; }
+    </style>
+</head>
+<body>
+
+    <!-- LOBBY -->
+    <div id="lobby-overlay">
+        <div class="lobby-box" id="lobby-step-1">
+            <h1>Bettle Trinca</h1>
+            <p>Jogue com seus amigos em tempo real!</p>
+            <button class="lobby-btn lobby-btn-create" id="btn-criar-sala">CRIAR SALA</button>
+            <button class="lobby-btn lobby-btn-join" id="btn-entrar-sala">ENTRAR EM SALA</button>
+        </div>
+        <div class="lobby-box" id="lobby-step-2"></div>
+    </div>
+
+    <!-- GAME -->
+    <div id="game-container">
+
+    <div id="end-game-overlay">
+        <h1 id="end-title" style="font-size: 4em;">VITÓRIA!</h1>
+        <button class="btn-ui" style="padding: 20px 40px; font-size: 1.5em;" onclick="window.reiniciarJogo()">JOGAR NOVAMENTE</button>
+        <button class="btn-ui" style="padding: 14px 30px; font-size: 1em; margin-top: 15px;" onclick="window.voltarAoLobby()">VOLTAR AO LOBBY</button>
+    </div>
+
+    <div class="room-code-header">Sala: <span id="room-code-header">---</span></div>
+
+    <div class="global-wins">
+        <div style="font-size: 11px; margin-bottom: 10px; color: #64748b; text-transform: uppercase;">Você é: <b id="player-id-display">...</b></div>
+        DUEL WINS
+        <div style="display: flex; gap: 20px; margin-top: 10px;">
+            <div>P1<span id="win-p1">0</span></div>
+            <div>P2<span id="win-p2">0</span></div>
+        </div>
+        <button class="btn-ui" style="margin-top: 12px; width: 100%;" onclick="window.resetPlacar()">RESET PLACAR</button>
+    </div>
+
+    <div class="top-bar">
+        <div class="status-msg" id="msg">AGUARDANDO OPONENTE...</div>
+        <button class="btn-ui" onclick="window.reiniciarJogo()">REINICIAR TUDO</button>
+        <button class="btn-ui" onclick="window.voltarAoLobby()">SAIR DA SALA</button>
+    </div>
+
+    <div class="game-world">
+        <div id="board">
+            <div class="row" id="opp-row">
+                <div class="round-markers" id="dots-opp"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+                <div class="slot" data-col="0"></div><div class="slot" data-col="1"></div><div class="slot" data-col="2"></div><div class="slot" data-col="3"></div><div class="slot" data-col="4"></div>
+            </div>
+            <div style="height: 1px; background: #334155; margin: 30px 0;"></div>
+            <div class="row" id="play-row">
+                <div class="round-markers" id="dots-my"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+                <div class="slot" data-col="0"></div><div class="slot" data-col="1"></div><div class="slot" data-col="2"></div><div class="slot" data-col="3"></div><div class="slot" data-col="4"></div>
+            </div>
+        </div>
+        <div class="deck-visual" style="width: 110px; height: 150px; background: #1e293b; border: 2px solid #64748b; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+            <div id="count" style="font-size:2em; font-weight:bold;">--</div><div>RESTAM</div>
+        </div>
+    </div>
+
+    <div id="hand-area"><div id="hand"></div></div>
+
+    <div class="guide-section">
+        <center><h4 style="color:#64748b; text-transform:uppercase;">Hierarquia de Combos</h4></center>
+        <div class="combo-grid" id="combo-list"></div>
+    </div>
+
+    </div><!-- /game-container -->
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, set, onValue, get, update, onDisconnect, remove, off } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        const firebaseConfig = { apiKey: "AIzaSyDa_CETs4heTzM7Gwf0GRTxB5td5QcVBrM", databaseURL: "https://bettle-trinca-default-rtdb.firebaseio.com/" };
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        let gameRef = null;
+        let currentRoomCode = null;
+        let myID = null, oppID = null, playerHand = [], selectedIdx = null, isMyTurn = false, bothOnline = false;
+        let lobbyListener = null;
+        let gameListenerUnsub = null;
+
+        // ========== LOBBY ==========
+
+        function gerarCodigoSala() {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            let code = '';
+            for (let i = 0; i < 5; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
+            return code;
+        }
+
+        function mostrarLobby() {
+            document.getElementById('lobby-overlay').style.display = 'flex';
+            document.getElementById('game-container').style.display = 'none';
+            document.getElementById('lobby-step-1').style.display = 'block';
+            document.getElementById('lobby-step-2').style.display = 'none';
+        }
+
+        function mostrarTelaCriarSala(code) {
+            const step2 = document.getElementById('lobby-step-2');
+            step2.style.display = 'block';
+            document.getElementById('lobby-step-1').style.display = 'none';
+            step2.innerHTML = `
+                <h2 style="margin:0 0 10px; color:white;">Sala Criada!</h2>
+                <p style="color:#94a3b8; margin:0 0 5px; font-size:0.85em;">Compartilhe este código com seu oponente:</p>
+                <div class="room-code-display">${code}</div>
+                <button class="lobby-btn lobby-btn-create" id="btn-copiar-codigo" style="font-size:0.9em; padding:12px;">COPIAR CÓDIGO</button>
+                <div class="lobby-status" id="lobby-status">Aguardando oponente entrar...</div>
+                <button class="lobby-back" id="btn-voltar-criar">&#8592; Voltar</button>
+            `;
+            document.getElementById('btn-copiar-codigo').onclick = () => {
+                navigator.clipboard.writeText(code).then(() => {
+                    document.getElementById('btn-copiar-codigo').innerText = 'COPIADO!';
+                    setTimeout(() => { document.getElementById('btn-copiar-codigo').innerText = 'COPIAR CÓDIGO'; }, 2000);
+                });
+            };
+            document.getElementById('btn-voltar-criar').onclick = async () => {
+                if (lobbyListener) { lobbyListener(); lobbyListener = null; }
+                await remove(ref(db, `rooms/${code}`));
+                currentRoomCode = null;
+                gameRef = null;
+                mostrarLobby();
+            };
+        }
+
+        function mostrarTelaEntrarSala() {
+            const step2 = document.getElementById('lobby-step-2');
+            step2.style.display = 'block';
+            document.getElementById('lobby-step-1').style.display = 'none';
+            step2.innerHTML = `
+                <h2 style="margin:0 0 10px; color:white;">Entrar em Sala</h2>
+                <p style="color:#94a3b8; margin:0 0 20px; font-size:0.85em;">Digite o código da sala:</p>
+                <input type="text" class="lobby-input" id="input-codigo" placeholder="EX: A3B7K" maxlength="5" autocomplete="off">
+                <button class="lobby-btn lobby-btn-create" id="btn-confirmar-entrada" style="margin-top:20px;">ENTRAR</button>
+                <div class="lobby-status" id="lobby-status"></div>
+                <button class="lobby-back" id="btn-voltar-entrar">&#8592; Voltar</button>
+            `;
+            const input = document.getElementById('input-codigo');
+            input.addEventListener('input', () => { input.value = input.value.toUpperCase().replace(/[^A-Z0-9]/g, ''); });
+            document.getElementById('btn-confirmar-entrada').onclick = () => entrarNaSala();
+            input.addEventListener('keydown', (e) => { if (e.key === 'Enter') entrarNaSala(); });
+            document.getElementById('btn-voltar-entrar').onclick = () => mostrarLobby();
+            setTimeout(() => input.focus(), 100);
+        }
+
+        async function criarSala() {
+            const code = gerarCodigoSala();
+            currentRoomCode = code;
+            gameRef = ref(db, `rooms/${code}`);
+            myID = 'p1'; oppID = 'p2';
+
+            let deck = await gerarDeck();
+            const maoP1 = deck.splice(0, 5), maoP2 = deck.splice(0, 5);
+            await set(gameRef, {
+                turn: 'p1', wins: { p1: 0, p2: 0 }, deck, deckCount: deck.length,
+                maos: { p1: maoP1, p2: maoP2 },
+                board: { p1: { col0: [], col1: [], col2: [], col3: [], col4: [] }, p2: { col0: [], col1: [], col2: [], col3: [], col4: [] } },
+                p1_online: true, p2_online: false
+            });
+
+            const myStatusRef = ref(db, `rooms/${code}/p1_online`);
+            onDisconnect(myStatusRef).set(false);
+
+            mostrarTelaCriarSala(code);
+
+            // Listen for P2 joining
+            lobbyListener = onValue(gameRef, (snap) => {
+                const data = snap.val();
+                if (data && data.p2_online) {
+                    if (lobbyListener) { lobbyListener(); lobbyListener = null; }
+                    iniciarJogo();
+                }
+            });
+        }
+
+        async function entrarNaSala() {
+            const code = document.getElementById('input-codigo').value.trim().toUpperCase();
+            const statusEl = document.getElementById('lobby-status');
+
+            if (code.length < 4) {
+                statusEl.className = 'lobby-status lobby-error';
+                statusEl.innerText = 'Código deve ter pelo menos 4 caracteres.';
+                return;
+            }
+
+            statusEl.className = 'lobby-status';
+            statusEl.innerText = 'Verificando sala...';
+
+            const roomRef = ref(db, `rooms/${code}`);
+            const snap = await get(roomRef);
+            const data = snap.val();
+
+            if (!data) {
+                statusEl.className = 'lobby-status lobby-error';
+                statusEl.innerText = 'Sala não encontrada. Verifique o código.';
+                return;
+            }
+
+            if (data.p1_online && data.p2_online) {
+                statusEl.className = 'lobby-status lobby-error';
+                statusEl.innerText = 'Sala cheia! Ambos os jogadores já estão conectados.';
+                return;
+            }
+
+            currentRoomCode = code;
+            gameRef = roomRef;
+            myID = 'p2'; oppID = 'p1';
+
+            const myStatusRef = ref(db, `rooms/${code}/p2_online`);
+            await set(myStatusRef, true);
+            onDisconnect(myStatusRef).set(false);
+
+            iniciarJogo();
+        }
+
+        function iniciarJogo() {
+            document.getElementById('lobby-overlay').style.display = 'none';
+            document.getElementById('game-container').style.display = 'block';
+            document.getElementById('player-id-display').innerText = myID.toUpperCase();
+            document.getElementById('room-code-header').innerText = currentRoomCode;
+            document.getElementById('end-game-overlay').style.display = 'none';
+            selectedIdx = null;
+            setupGameListeners();
+            carregarGuia();
+        }
+
+        // ========== GAME ==========
+
+        async function gerarDeck() {
+            const v = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'], n = ['♥', '♦', '♣', '♠'];
+            let d = [];
+            n.forEach(s => v.forEach(val => d.push({ v: val, s, color: (s === '♥' || s === '♦') ? 'red' : 'black' })));
+            d.push({ v: 'JK', s: '★', color: 'black', type: 'joker' }, { v: 'JK', s: '★', color: 'black', type: 'joker' });
+            for (let i = d.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [d[i], d[j]] = [d[j], d[i]]; }
+            return d;
+        }
+
+        window.reiniciarJogo = async () => {
+            if (!gameRef) return;
+            let deck = await gerarDeck();
+            const maoP1 = deck.splice(0, 5), maoP2 = deck.splice(0, 5);
+            const snap = await get(gameRef);
+            const data = snap.val();
+            await set(gameRef, {
+                turn: 'p1', wins: data?.wins || { p1: 0, p2: 0 }, deck: deck, deckCount: deck.length,
+                maos: { p1: maoP1, p2: maoP2 },
+                board: { p1: { col0: [], col1: [], col2: [], col3: [], col4: [] }, p2: { col0: [], col1: [], col2: [], col3: [], col4: [] } },
+                p1_online: data?.p1_online || false, p2_online: data?.p2_online || false
+            });
+            document.getElementById('end-game-overlay').style.display = 'none';
+        };
+
+        window.resetPlacar = async () => {
+            if (!gameRef) return;
+            await update(gameRef, { wins: { p1: 0, p2: 0 } });
+        };
+
+        window.voltarAoLobby = async () => {
+            // Cleanup listeners
+            if (gameListenerUnsub) { gameListenerUnsub(); gameListenerUnsub = null; }
+            if (lobbyListener) { lobbyListener(); lobbyListener = null; }
+            // Set offline
+            if (gameRef && myID && currentRoomCode) {
+                const myStatusRef = ref(db, `rooms/${currentRoomCode}/${myID}_online`);
+                await set(myStatusRef, false);
+            }
+            document.getElementById('end-game-overlay').style.display = 'none';
+            currentRoomCode = null;
+            gameRef = null;
+            myID = null; oppID = null;
+            playerHand = []; selectedIdx = null; isMyTurn = false; bothOnline = false;
+            // Reset board UI
+            for (const rowId of ['play-row', 'opp-row']) {
+                const row = document.getElementById(rowId);
+                row.querySelectorAll('.slot').forEach(s => { s.innerHTML = ''; s.style.boxShadow = 'none'; });
+            }
+            document.getElementById('hand').innerHTML = '';
+            updateDots('dots-my', 0); updateDots('dots-opp', 0);
+            mostrarLobby();
+        };
+
+        window.selectCard = (idx) => {
+            if (!isMyTurn || !bothOnline) return;
+            selectedIdx = (selectedIdx === idx) ? null : idx;
+            window.updateHandUI();
+        };
+
+        window.updateHandUI = () => {
+            const h = document.getElementById('hand'); h.innerHTML = '';
+            if (!playerHand) return;
+            playerHand.forEach((c, i) => {
+                const d = document.createElement('div');
+                d.className = `card-body hand-card ${c.color} ${selectedIdx === i ? 'selected' : ''} ${c.type === 'joker' ? 'joker-card' : ''}`;
+                d.style.position = "relative"; d.style.left = "0";
+                d.innerHTML = `<div class="card-info"><span>${c.v}</span><span>${c.s}</span></div>`;
+                d.onclick = (e) => { e.stopPropagation(); window.selectCard(i); };
+                h.appendChild(d);
+            });
+        };
+
+        function setupGameListeners() {
+            document.getElementById('play-row').onclick = async (e) => {
+                const slot = e.target.closest('.slot');
+                if (!slot || !isMyTurn || selectedIdx === null || !bothOnline || !gameRef) return;
+                const col = slot.getAttribute('data-col');
+                const snap = await get(gameRef);
+                const data = snap.val();
+                const board = data.board || {};
+                const playerBoard = board[myID] || { col0: [], col1: [], col2: [], col3: [], col4: [] };
+                let cardsInSlot = playerBoard[`col${col}`] || [];
+
+                if (cardsInSlot.length < 3) {
+                    let minhaMao = [...data.maos[myID]];
+                    let deck = data.deck || [];
+                    const cartaParaJogar = minhaMao.splice(selectedIdx, 1)[0];
+                    cardsInSlot.push(cartaParaJogar);
+                    if (deck.length > 0) minhaMao.push(deck.shift());
+                    const updates = {};
+                    updates[`board/${myID}/col${col}`] = cardsInSlot;
+                    updates[`maos/${myID}`] = minhaMao;
+                    updates[`deck`] = deck;
+                    updates[`deckCount`] = deck.length;
+                    updates[`turn`] = oppID;
+                    await update(gameRef, updates);
+                    selectedIdx = null;
+                }
+            };
+
+            gameListenerUnsub = onValue(gameRef, (snapshot) => {
+                const data = snapshot.val();
+                if (!data || !data.maos) return;
+
+                bothOnline = (data.p1_online && data.p2_online);
+                playerHand = data.maos[myID] || [];
+                window.updateHandUI();
+
+                const msg = document.getElementById('msg');
+                if (!bothOnline) {
+                    msg.innerText = "AGUARDANDO OPONENTE...";
+                    msg.className = "status-msg status-waiting";
+                    isMyTurn = false;
+                } else {
+                    isMyTurn = (data.turn === myID);
+                    msg.innerText = isMyTurn ? "SUA VEZ!" : "OPONENTE JOGANDO";
+                    msg.className = `status-msg ${isMyTurn ? 'status-your' : 'status-opp'}`;
+                }
+
+                document.getElementById('count').innerText = data.deckCount;
+                document.getElementById('win-p1').innerText = data.wins?.p1 || 0;
+                document.getElementById('win-p2').innerText = data.wins?.p2 || 0;
+
+                let mWins = 0, oWins = 0;
+                const board = data.board || { p1: {}, p2: {} };
+                for (let i = 0; i < 5; i++) {
+                    const mc = (board[myID] && board[myID][`col${i}`]) ? board[myID][`col${i}`] : [];
+                    const oc = (board[oppID] && board[oppID][`col${i}`]) ? board[oppID][`col${i}`] : [];
+                    const revelarOculta = (mc.length === 3 && oc.length === 3);
+                    let res = null;
+                    if (mc.length === 3 && oc.length === 3) {
+                        const mp = evalMao(mc), op = evalMao(oc);
+                        if (mp > op) { res = 'win'; mWins++; }
+                        else if (op > mp) { res = 'loss'; oWins++; }
+                    }
+                    renderSlot('play-row', i, mc, false, res === 'win' ? 'winner' : (res === 'loss' ? 'loser' : ''), revelarOculta);
+                    renderSlot('opp-row', i, oc, true, res === 'loss' ? 'winner' : (res === 'win' ? 'loser' : ''), revelarOculta);
+                }
+                updateDots('dots-my', mWins); updateDots('dots-opp', oWins);
+                if (mWins >= 3) finalizarDuelo(myID, data.wins);
+                if (oWins >= 3) finalizarDuelo(oppID, data.wins);
+            });
+        }
+
+        function getPower(c) {
+            const v = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+            if (c.v === 'JK') return 15; return v.indexOf(c.v) + 2;
+        }
+
+        function evalMao(cards) {
+            if (cards.length < 3) return 0;
+            const p = cards.map(c => getPower(c)).sort((a, b) => a - b);
+            const isFlush = cards.every(c => c.s === cards[0].s), isTrinca = cards.every(c => c.v === cards[0].v);
+            const isSeq = (p[2] - p[1] === 1 && p[1] - p[0] === 1);
+            if (isTrinca) return 700 + p[0]; if (isFlush && isSeq) return 600; if (isFlush) return 500; if (isSeq) return 400;
+            if (p[0] === p[1] || p[1] === p[2]) return 200 + p[1]; return p[0] + p[1] + p[2];
+        }
+
+        async function finalizarDuelo(vencedorID, winsAtuais) {
+            const overlay = document.getElementById('end-game-overlay');
+            if (overlay.style.display === 'flex') return;
+            overlay.style.display = 'flex';
+            document.getElementById('end-title').innerText = vencedorID === myID ? 'VITÓRIA!' : 'DERROTA';
+            if (vencedorID === myID) {
+                const novasWins = { ...winsAtuais };
+                novasWins[myID] = (novasWins[myID] || 0) + 1;
+                await update(gameRef, { wins: novasWins });
+            }
+        }
+
+        function renderSlot(rowID, idx, cards, isOpp, cls, revelarTudo) {
+            const row = document.getElementById(rowID);
+            const s = row.querySelector(`[data-col="${idx}"]`);
+            s.innerHTML = '';
+            s.style.boxShadow = cls === 'winner' ? 'inset 0 0 20px var(--win)' : (cls === 'loser' ? 'inset 0 0 20px var(--loss)' : 'none');
+            cards.forEach((c, i) => {
+                const div = document.createElement('div');
+                const deveOcultar = (idx == 0 && !revelarTudo);
+                const mostrarCostas = isOpp ? deveOcultar : (idx == 0 && cards.length < 3);
+                div.className = `card-body ${c.color} ${c.type === 'joker' && !mostrarCostas ? 'joker-card' : ''} ${mostrarCostas ? 'card-back' : ''}`;
+                div.style.top = (i * 30) + "px";
+                if (!mostrarCostas) div.innerHTML = `<div class="card-info"><span>${c.v}</span><span>${c.s}</span></div>`;
+                s.appendChild(div);
+            });
+        }
+
+        function updateDots(id, count) {
+            const parent = document.getElementById(id);
+            if (!parent) return;
+            const d = parent.children;
+            for (let i = 0; i < 3; i++) { if (d[i]) d[i].className = i < count ? 'dot active' : 'dot'; }
+        }
+
+        function carregarGuia() {
+            const gList = document.getElementById('combo-list');
+            if (gList.children.length > 0) return;
+            const comboData = [{ n: "TRINCA ÁS", c: ['A♠', 'A♥', 'A♣'] }, { n: "STR. FLUSH", c: ['A♦', '2♦', '3♦'] }, { n: "TRINCA", c: ['10♠', '10♥', '10♣'] }, { n: "FLUSH", c: ['2♠', 'J♠', '5♠'] }, { n: "SEQ.", c: ['3♠', '4♦', '5♥'] }, { n: "PAR", c: ['K♠', 'K♥', '2♣'] }];
+            comboData.forEach(g => {
+                const box = document.createElement('div'); box.className = 'combo-item';
+                let h = `<span style="font-size:10px; font-weight:bold; color:#94a3b8">${g.n}</span><div class="mini-slot">`;
+                g.c.forEach((card, i) => {
+                    const v = card.slice(0, -1), s = card.slice(-1), color = (s === '♥' || s === '♦') ? 'red' : 'black';
+                    h += `<div class="card-body ${color}" style="top:${i * 28}px; width:75px; height:105px; left:9px; font-size:12px; pointer-events:none;"><div class="card-info"><span>${v}</span><span>${s}</span></div></div>`;
+                });
+                box.innerHTML = h + `</div>`; gList.appendChild(box);
+            });
+        }
+
+        // ========== INIT ==========
+        document.getElementById('btn-criar-sala').onclick = () => criarSala();
+        document.getElementById('btn-entrar-sala').onclick = () => mostrarTelaEntrarSala();
+
+        // Check URL for room code (e.g. ?sala=ABC12)
+        const urlParams = new URLSearchParams(window.location.search);
+        const salaParam = urlParams.get('sala');
+        if (salaParam) {
+            mostrarTelaEntrarSala();
+            setTimeout(() => {
+                const input = document.getElementById('input-codigo');
+                if (input) { input.value = salaParam.toUpperCase(); entrarNaSala(); }
+            }, 200);
+        }
+    </script>
+</body>
+</html>
