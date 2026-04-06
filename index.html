@@ -70,13 +70,13 @@
 </head>
 <body>
 
-    <audio id="snd-match" src="sonds/efeitos/Pastida encontrada.mp3" preload="auto"></audio>
-    <audio id="snd-drop1" src="sonds/efeitos/Drop card1.mp3" preload="auto"></audio>
-    <audio id="snd-drop2" src="sonds/efeitos/Drop card2.mp3" preload="auto"></audio>
-    <audio id="snd-turn" src="sonds/efeitos/Minha vez.mp3" preload="auto"></audio>
-    <audio id="snd-win" src="sonds/efeitos/vitoria.mp3" preload="auto"></audio>
-    <audio id="snd-lose" src="sonds/efeitos/Derrota.mp3" preload="auto"></audio>
-    <audio id="snd-select" src="sonds/efeitos/select.mp3" preload="auto"></audio>
+    <audio id="snd-match" src="sonds/effect/effect_01.mp3" preload="auto"></audio>
+    <audio id="snd-drop1" src="sonds/effect/effect_02.mp3" preload="auto"></audio>
+    <audio id="snd-drop2" src="sonds/effect/effect_03.mp3" preload="auto"></audio>
+    <audio id="snd-turn" src="sonds/effect/effect_04.mp3" preload="auto"></audio>
+    <audio id="snd-win" src="sonds/effect/effect_05.mp3" preload="auto"></audio>
+    <audio id="snd-lose" src="sonds/effect/effect_06.mp3" preload="auto"></audio>
+    <audio id="snd-select" src="sonds/effect/effect_07.mp3" preload="auto"></audio>
     <audio id="bg-music" preload="auto"></audio>
 
     <div id="lobby-overlay">
@@ -161,6 +161,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, set, onValue, get, update, onDisconnect } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
+        // CONFIGURAÇÃO FIREBASE (MANTER A SUA ATUAL)
         const firebaseConfig = { apiKey: "AIzaSyDa_CETs4heTzM7Gwf0GRTxB5td5QcVBrM", databaseURL: "https://bettle-trinca-default-rtdb.firebaseio.com/" };
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
@@ -243,7 +244,6 @@
                 const data = snapshot.val();
                 if (!data) return;
 
-                // DETECÇÃO DE DESCONEXÃO
                 const isOppOnline = (oppID === 'p1' ? data.p1_online : data.p2_online);
                 if (bothOnline && isOppOnline === false) {
                     document.getElementById('disconnect-overlay').style.display = 'flex';
@@ -323,10 +323,7 @@
                     d.classList.add('new-card-anim'); 
                     const delay = isInitialDeal ? (i * 150) : 0;
                     d.style.animationDelay = `${delay}ms`; 
-
-                    setTimeout(() => {
-                        playSnd((i % 2 === 0) ? 'snd-drop1' : 'snd-drop2');
-                    }, delay);
+                    setTimeout(() => { playSnd((i % 2 === 0) ? 'snd-drop1' : 'snd-drop2'); }, delay);
                 }
                 
                 d.style.position = "relative"; d.style.left = "0";
@@ -365,10 +362,11 @@
             else { playSnd('snd-lose'); title.innerText = "DERROTA"; title.style.color = "var(--loss)"; lancarConfetes('lose'); }
         }
 
+        // SYNC MUSIC COM O NOVO CAMINHO MUSIC/MUSIC_XX.MP3
         function syncMusic(trackNum) {
             if (currentTrackLocal === trackNum) return;
             currentTrackLocal = trackNum;
-            bgMusic.src = `sonds/fundo/${trackNum.toString().padStart(2, '0')}.mp3`;
+            bgMusic.src = `sonds/music/music_${trackNum.toString().padStart(2, '0')}.mp3`;
             bgMusic.play().catch(() => { window.addEventListener('click', () => bgMusic.play(), { once: true }); });
         }
 
@@ -413,19 +411,15 @@
         window.reiniciarJogo = async () => {
             if (myID !== 'p1') return;
             gameAlreadyFinished = false;
-
             await update(gameRef, {
                 maos: { p1: [], p2: [] },
                 board: { p1: {col0:[],col1:[],col2:[],col3:[],col4:[]}, p2: {col0:[],col1:[],col2:[],col3:[],col4:[]} },
                 times: { p1:{}, p2:{} }, lastMove: null, turn: "waiting", resetRequest: null
             });
-
             setTimeout(async () => {
                 let deck = await createDeck();
                 const maoP1 = deck.splice(0,5); const maoP2 = deck.splice(0,5);
-                await update(gameRef, { 
-                    turn: 'p1', deck, deckCount: deck.length, maos: { p1: maoP1, p2: maoP2 } 
-                });
+                await update(gameRef, { turn: 'p1', deck, deckCount: deck.length, maos: { p1: maoP1, p2: maoP2 } });
             }, 800);
         };
 
