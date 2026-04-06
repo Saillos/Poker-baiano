@@ -50,6 +50,7 @@
         .hand-card { cursor: pointer !important; transition: 0.3s; position: relative; pointer-events: auto !important; }
         .hand-card.selected { transform: translateY(-25px); outline: 4px solid var(--win); box-shadow: 0 0 20px var(--win); }
 
+        /* OVERLAYS COM HIERARQUIA CORRIGIDA */
         #lobby-overlay { display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 3000; justify-content: center; align-items: center; flex-direction: column; }
         .lobby-box { background: #1e293b; padding: 40px 50px; border-radius: 16px; border: 2px solid #334155; text-align: center; max-width: 400px; width: 90%; position: relative; }
         .lobby-btn { display: block; width: 100%; padding: 16px; margin: 12px 0; font-size: 1.1em; font-weight: bold; border: none; border-radius: 10px; cursor: pointer; text-transform: uppercase; }
@@ -57,7 +58,11 @@
         .lobby-input { width: 100%; padding: 14px; font-size: 1.3em; font-weight: bold; text-align: center; border: 2px solid #334155; border-radius: 10px; background: #0f172a; color: white; box-sizing: border-box; }
         .room-code-display { font-size: 2.5em; font-weight: 900; letter-spacing: 10px; color: var(--win); background: rgba(46,204,113,0.1); padding: 15px 25px; border-radius: 12px; margin: 20px 0; position: relative; }
         
-        #end-game-overlay, #reset-request-overlay, #disconnect-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.95); z-index: 4000; justify-content: center; align-items: center; flex-direction: column; text-align: center; }
+        /* Overlays Base */
+        #end-game-overlay, #reset-request-overlay, #disconnect-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.96); justify-content: center; align-items: center; flex-direction: column; text-align: center; }
+
+        #end-game-overlay { z-index: 4000; }
+        #reset-request-overlay { z-index: 5000; } /* Maior que o de vitória */
         #disconnect-overlay { z-index: 6000; background: rgba(15, 23, 42, 0.98); }
         
         .guide-section { margin-top: 60px; border-top: 1px solid #334155; padding: 30px; width: 95%; background: rgba(15,23,42,0.5); }
@@ -101,10 +106,10 @@
         </div>
 
         <div id="reset-request-overlay">
-            <h2 id="reset-msg" style="font-size: 2em;">OPONENTE QUER REINICIAR</h2>
-            <div id="reset-btns" style="display:flex; gap: 15px; margin-top: 20px;">
-                <button class="btn-ui" style="background: var(--win); padding: 15px 30px;" id="btn-reset-sim">ACEITAR</button>
-                <button class="btn-ui" style="background: var(--loss); padding: 15px 30px;" id="btn-reset-nao">RECUSAR</button>
+            <h2 id="reset-msg" style="font-size: 2em; margin-bottom: 20px;">OPONENTE QUER REINICIAR</h2>
+            <div id="reset-btns" style="display:flex; gap: 20px;">
+                <button class="btn-ui" style="background: var(--win); padding: 15px 35px; font-size: 12px;" id="btn-reset-sim">ACEITAR</button>
+                <button class="btn-ui" style="background: var(--loss); padding: 15px 35px; font-size: 12px;" id="btn-reset-nao">RECUSAR</button>
             </div>
         </div>
 
@@ -161,7 +166,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, set, onValue, get, update, onDisconnect } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-        // CONFIGURAÇÃO FIREBASE (MANTER A SUA ATUAL)
         const firebaseConfig = { apiKey: "AIzaSyDa_CETs4heTzM7Gwf0GRTxB5td5QcVBrM", databaseURL: "https://bettle-trinca-default-rtdb.firebaseio.com/" };
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
@@ -244,6 +248,7 @@
                 const data = snapshot.val();
                 if (!data) return;
 
+                // DETECÇÃO DE DESCONEXÃO
                 const isOppOnline = (oppID === 'p1' ? data.p1_online : data.p2_online);
                 if (bothOnline && isOppOnline === false) {
                     document.getElementById('disconnect-overlay').style.display = 'flex';
@@ -253,6 +258,9 @@
 
                 if (data.resetRequest === 'accepted') {
                     limparMesaVisualmente();
+                    // Limpar todos os overlays
+                    document.getElementById('end-game-overlay').style.display = 'none';
+                    document.getElementById('reset-request-overlay').style.display = 'none';
                     if (myID === 'p1') window.reiniciarJogo();
                     return; 
                 }
@@ -262,7 +270,9 @@
                     resOverlay.style.display = 'flex';
                     document.getElementById('reset-msg').innerText = data.resetRequest === myID ? "AGUARDANDO OPONENTE..." : "OPONENTE QUER JOGAR NOVAMENTE";
                     document.getElementById('reset-btns').style.display = data.resetRequest === myID ? 'none' : 'flex';
-                } else { resOverlay.style.display = 'none'; }
+                } else { 
+                    resOverlay.style.display = 'none'; 
+                }
 
                 if (data.currentTrack) syncMusic(data.currentTrack);
                 if ((data.p1_online && data.p2_online) && !bothOnline) playSnd('snd-match');
@@ -317,15 +327,12 @@
             playerHand.forEach((c, i) => {
                 const d = document.createElement('div');
                 d.className = `card-body hand-card ${c.color} ${selectedIdx === i ? 'selected' : ''} ${c.type === 'joker' ? 'joker-card' : ''}`;
-                
                 if (isInitialDeal || i >= lastHandSize) { 
-                    d.style.opacity = "0"; 
-                    d.classList.add('new-card-anim'); 
+                    d.style.opacity = "0"; d.classList.add('new-card-anim'); 
                     const delay = isInitialDeal ? (i * 150) : 0;
                     d.style.animationDelay = `${delay}ms`; 
                     setTimeout(() => { playSnd((i % 2 === 0) ? 'snd-drop1' : 'snd-drop2'); }, delay);
                 }
-                
                 d.style.position = "relative"; d.style.left = "0";
                 d.innerHTML = `<div class="card-info"><span>${c.v}</span><span>${c.s}</span></div>`;
                 d.onclick = () => { if(isMyTurn && bothOnline) { if(selectedIdx !== i) playSnd('snd-select'); selectedIdx = (selectedIdx === i ? null : i); updateHandUI(); } };
@@ -362,7 +369,6 @@
             else { playSnd('snd-lose'); title.innerText = "DERROTA"; title.style.color = "var(--loss)"; lancarConfetes('lose'); }
         }
 
-        // SYNC MUSIC COM O NOVO CAMINHO MUSIC/MUSIC_XX.MP3
         function syncMusic(trackNum) {
             if (currentTrackLocal === trackNum) return;
             currentTrackLocal = trackNum;
