@@ -8,11 +8,13 @@
         :root { --bg: #0f172a; --accent: #8e44ad; --win: #2ecc71; --loss: #e74c3c; }
         body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; margin: 0; padding-bottom: 50px; overflow-x: hidden; }
 
+        /* ANIMAÇÕES */
         @keyframes drawCardAnim { 0% { opacity: 0; transform: translateY(40px) scale(0.8); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
         .new-card-anim { opacity: 0; animation: drawCardAnim 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
         @keyframes dropOnTable { 0% { opacity: 0; transform: scale(1.6) translateY(-30px); filter: brightness(2); } 100% { opacity: 1; transform: scale(1) translateY(0); filter: brightness(1); } }
         .slot-card-anim { animation: dropOnTable 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.2) forwards; }
 
+        /* UI GERAL */
         .volume-controls { position: absolute; top: 50px; left: 20px; display: flex; flex-direction: column; gap: 8px; background: rgba(30, 41, 59, 0.5); padding: 10px; border-radius: 8px; border: 1px solid #334155; z-index: 1001; }
         .vol-item { display: flex; align-items: center; gap: 10px; font-size: 10px; color: #94a3b8; text-transform: uppercase; font-weight: bold; }
         .vol-item input { cursor: pointer; accent-color: var(--accent); width: 80px; }
@@ -24,7 +26,20 @@
         .btn-ui { background: #1e293b; color: white; border: 1px solid #334155; padding: 8px 18px; cursor: pointer; border-radius: 5px; font-weight: bold; font-size: 10px; text-transform: uppercase; transition: 0.2s; }
         .btn-ui:hover { background: var(--accent); }
 
-        .status-msg { font-size: 1.6em; font-weight: bold; min-width: 320px; text-align: center; text-transform: uppercase; transition: 0.3s; }
+        /* MODAL DE REGRAS COMPLETO */
+        #modal-regras { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; justify-content: center; align-items: center; }
+        .modal-content { background: #1e293b; width: 90%; max-width: 650px; max-height: 85vh; overflow-y: auto; padding: 40px; border-radius: 20px; border: 2px solid var(--accent); position: relative; line-height: 1.6; color: #e2e8f0; }
+        .modal-content h2 { color: var(--accent); border-bottom: 2px solid #334155; padding-bottom: 10px; margin-top: 30px; }
+        .modal-content h2:first-of-type { margin-top: 0; }
+        .modal-content h3 { color: var(--win); margin-top: 20px; }
+        .modal-content b { color: #fff; }
+        .close-modal { position: absolute; top: 20px; right: 20px; font-size: 30px; cursor: pointer; color: #64748b; transition: 0.2s; }
+        .close-modal:hover { color: white; }
+        .btn-regras-game { position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; border-radius: 50%; background: var(--accent); color: white; border: none; font-size: 24px; font-weight: bold; cursor: pointer; z-index: 2000; box-shadow: 0 4px 15px rgba(0,0,0,0.5); transition: 0.3s; }
+        .btn-regras-game:hover { transform: scale(1.1); background: #9b59b6; }
+
+        /* TABULEIRO */
+        .status-msg { font-size: 1.6em; font-weight: bold; min-width: 320px; text-align: center; text-transform: uppercase; }
         .status-your { color: var(--win); }
         .status-opp { color: #f1c40f; }
         .status-waiting { color: #ffffff; opacity: 0.6; }
@@ -50,27 +65,24 @@
         .hand-card { cursor: pointer !important; transition: 0.3s; position: relative; pointer-events: auto !important; }
         .hand-card.selected { transform: translateY(-25px); outline: 4px solid var(--win); box-shadow: 0 0 20px var(--win); }
 
-        /* OVERLAYS COM HIERARQUIA CORRIGIDA */
+        /* OVERLAYS */
         #lobby-overlay { display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 3000; justify-content: center; align-items: center; flex-direction: column; }
         .lobby-box { background: #1e293b; padding: 40px 50px; border-radius: 16px; border: 2px solid #334155; text-align: center; max-width: 400px; width: 90%; position: relative; }
         .lobby-btn { display: block; width: 100%; padding: 16px; margin: 12px 0; font-size: 1.1em; font-weight: bold; border: none; border-radius: 10px; cursor: pointer; text-transform: uppercase; }
         .lobby-btn-create { background: var(--accent); color: white; }
         .lobby-input { width: 100%; padding: 14px; font-size: 1.3em; font-weight: bold; text-align: center; border: 2px solid #334155; border-radius: 10px; background: #0f172a; color: white; box-sizing: border-box; }
-        .room-code-display { font-size: 2.5em; font-weight: 900; letter-spacing: 10px; color: var(--win); background: rgba(46,204,113,0.1); padding: 15px 25px; border-radius: 12px; margin: 20px 0; position: relative; }
+        .room-code-display { font-size: 2.5em; font-weight: 900; letter-spacing: 10px; color: var(--win); background: rgba(46,204,113,0.1); padding: 15px 25px; border-radius: 12px; margin: 20px 0; }
         
-        /* Overlays Base */
         #end-game-overlay, #reset-request-overlay, #disconnect-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.96); justify-content: center; align-items: center; flex-direction: column; text-align: center; }
-
         #end-game-overlay { z-index: 4000; }
-        #reset-request-overlay { z-index: 5000; } /* Maior que o de vitória */
+        #reset-request-overlay { z-index: 5000; }
         #disconnect-overlay { z-index: 6000; background: rgba(15, 23, 42, 0.98); }
         
         .guide-section { margin-top: 60px; border-top: 1px solid #334155; padding: 30px; width: 95%; background: rgba(15,23,42,0.5); }
         .combo-grid { display: flex; gap: 30px; justify-content: center; margin-top: 30px; flex-wrap: wrap; }
         .mini-slot { width: 95px; height: 150px; position: relative; border: 1px solid #334155; border-radius: 8px; background: rgba(0,0,0,0.3); }
 
-        .btn-copy-colar { background: #334155; border: none; color: white; padding: 8px 15px; border-radius: 6px; font-size: 11px; cursor: pointer; margin-top: 10px; text-transform: uppercase; font-weight: bold; transition: 0.2s; }
-        .btn-copy-colar:hover { background: var(--accent); }
+        .btn-copy-colar { background: #334155; border: none; color: white; padding: 8px 15px; border-radius: 6px; font-size: 11px; cursor: pointer; margin-top: 10px; text-transform: uppercase; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -84,22 +96,90 @@
     <audio id="snd-select" src="sonds/effect/effect_07.mp3" preload="auto"></audio>
     <audio id="bg-music" preload="auto"></audio>
 
+    <div id="modal-regras">
+        <div class="modal-content">
+            <span class="close-modal" id="btn-fechar-regras">&times;</span>
+            
+            <h2 style="color: var(--accent); border-bottom: 2px solid var(--accent); text-align:center;">📖 Livro de Regras: Bettle Trinca</h2>
+            <p>O <b>Bettle Trinca</b> é um jogo de estratégia e antecipação para dois jogadores. O objetivo é vencer a disputa em <b>3 das 5 colunas</b> da mesa, formando as melhores combinações de 3 cartas (Trincas).</p>
+            
+            <h3>1. O Baralho</h3>
+            <ul>
+                <li><b>Total:</b> 54 cartas (Baralho padrão de 52 cartas + 2 Coringas).</li>
+                <li><b>Coringas (JK):</b> São cartas "wild". Elas assumem automaticamente o valor e naipe necessários para formar a maior combinação possível na coluna onde forem jogadas.</li>
+            </ul>
+
+            <h3>2. Fluxo da Partida</h3>
+            <ul>
+                <li>Cada jogador começa com <b>5 cartas na mão</b>.</li>
+                <li>A cada turno, o jogador deve baixar <b>1 carta</b> em qualquer uma das suas 5 colunas.</li>
+                <li>Imediatamente após jogar, o jogador compra uma nova carta do deck (mantendo sempre 5 na mão, até o deck acabar).</li>
+                <li>O turno passa para o oponente.</li>
+            </ul>
+
+            <h3>3. A Coluna Zero (Estratégia)</h3>
+            <p>A primeira coluna (Coluna 0) é especial:</p>
+            <ul>
+                <li>As cartas jogadas ali ficam <b>viradas para baixo (ocultas)</b> para o oponente.</li>
+                <li>Elas só são reveladas quando ambos os jogadores completarem 3 cartas nessa coluna ou quando o jogo terminar.</li>
+                <li><b>Dica:</b> Use a Coluna 0 para esconder seus Coringas ou blefar!</li>
+            </ul>
+
+            <h3>4. Como Vencer uma Coluna</h3>
+            <p>Uma coluna é disputada quando ambos os jogadores colocam 3 cartas nela. A hierarquia de forças (da maior para a menor) é:</p>
+            <ol>
+                <li><b>Trinca de Ás:</b> Três cartas "A" (A pontuação máxima).</li>
+                <li><b>Straight Flush:</b> Sequência de 3 cartas do mesmo naipe.</li>
+                <li><b>Trinca:</b> Três cartas do mesmo valor.</li>
+                <li><b>Flush:</b> Três cartas do mesmo naipe, sem sequência.</li>
+                <li><b>Sequência (Straight):</b> Três cartas em ordem numérica.</li>
+                <li><b>Par:</b> Duas cartas do mesmo valor.</li>
+                <li><b>Carta Alta:</b> Soma dos valores das 3 cartas.</li>
+            </ol>
+            <p><i>*Critério de Desempate: Se houver empate na combinação, vence quem completou a coluna primeiro.</i></p>
+
+            <h2 style="color: var(--win); border-bottom: 2px solid var(--win); text-align:center;">🕹️ Tutorial: Passo a Passo</h2>
+            
+            <h3>Passo 1: Criar ou Entrar</h3>
+            <ul>
+                <li><b>Criar Sala:</b> Clique em "Criar Sala", copie o código e envie para seu amigo.</li>
+                <li><b>Entrar na Sala:</b> Cole o código que seu amigo enviou e clique em "Entrar".</li>
+            </ul>
+
+            <h3>Passo 2: Selecionar e Jogar</h3>
+            <ul>
+                <li>Clique em uma carta da sua mão (ela subirá levemente).</li>
+                <li>Clique em um dos 5 Slots do seu lado para baixar a carta.</li>
+                <li>O som de "Drop" confirmará a jogada e o turno passa.</li>
+            </ul>
+
+            <h3>Passo 3: Monitorar o Placar</h3>
+            <ul>
+                <li>Veja as <b>bolinhas (dots)</b> ao lado das colunas.</li>
+                <li>Uma bolinha acesa significa vitória naquela coluna.</li>
+                <li>O primeiro a acender 3 bolinhas ganha a rodada!</li>
+            </ul>
+
+            <h3>Passo 4: Reiniciar</h3>
+            <p>Basta clicar em <b>"Jogar Novamente"</b>. O oponente receberá um aviso e, assim que aceitar, um novo baralho será distribuído.</p>
+
+            <button class="lobby-btn lobby-btn-create" style="margin-top: 20px;" id="btn-entendi-regras">ENTENDI!</button>
+        </div>
+    </div>
+
     <div id="lobby-overlay">
         <div class="lobby-box" id="lobby-step-1">
             <h1>Bettle Trinca</h1>
             <button class="lobby-btn lobby-btn-create" id="btn-criar-sala">CRIAR SALA</button>
             <button class="lobby-btn" style="background:transparent; color:white; border:1px solid #334155;" id="btn-entrar-sala">ENTRAR EM SALA</button>
+            <button class="btn-ui" style="margin-top: 15px; width: 100%; color: var(--accent); border-color: var(--accent);" id="btn-regras-lobby">COMO JOGAR?</button>
         </div>
         <div class="lobby-box" id="lobby-step-2" style="display:none"></div>
     </div>
 
-    <div id="disconnect-overlay">
-        <h1 style="color: var(--loss); font-size: 4em; font-weight: 900;">OPONENTE SAIU</h1>
-        <p style="font-size: 1.2em; opacity: 0.8;">A conexão com a mesa foi perdida.</p>
-        <button class="btn-ui" onclick="location.reload()" style="margin-top: 30px; padding: 15px 40px; background: var(--accent);">VOLTAR AO INÍCIO</button>
-    </div>
-
     <div id="game-container" style="display:none;">
+        <button class="btn-regras-game" id="btn-regras-game">?</button>
+
         <div class="volume-controls">
             <div class="vol-item"><span>MUSICA</span><input type="range" id="vol-bg" min="0" max="1" step="0.05" value="0.1"></div>
             <div class="vol-item"><span>EFEITOS</span><input type="range" id="vol-fx" min="0" max="1" step="0.05" value="1"></div>
@@ -108,16 +188,16 @@
         <div id="reset-request-overlay">
             <h2 id="reset-msg" style="font-size: 2em; margin-bottom: 20px;">OPONENTE QUER REINICIAR</h2>
             <div id="reset-btns" style="display:flex; gap: 20px;">
-                <button class="btn-ui" style="background: var(--win); padding: 15px 35px; font-size: 12px;" id="btn-reset-sim">ACEITAR</button>
-                <button class="btn-ui" style="background: var(--loss); padding: 15px 35px; font-size: 12px;" id="btn-reset-nao">RECUSAR</button>
+                <button class="btn-ui" style="background: var(--win); padding: 15px 35px;" id="btn-reset-sim">ACEITAR</button>
+                <button class="btn-ui" style="background: var(--loss); padding: 15px 35px;" id="btn-reset-nao">RECUSAR</button>
             </div>
         </div>
 
         <div id="end-game-overlay">
             <h1 id="end-title">VITÓRIA!</h1>
             <div style="display:flex; gap: 20px;">
-                <button class="btn-ui" style="padding: 20px 40px; background: var(--win); font-size: 14px;" id="btn-jogar-novamente">JOGAR NOVAMENTE</button>
-                <button class="btn-ui" style="padding: 20px 40px; background: #334155; font-size: 14px;" id="btn-sair-final">SAIR DA MESA</button>
+                <button class="btn-ui" style="padding: 20px 40px; background: var(--win);" id="btn-jogar-novamente">JOGAR NOVAMENTE</button>
+                <button class="btn-ui" style="padding: 20px 40px; background: #334155;" id="btn-sair-final">SAIR DA MESA</button>
             </div>
         </div>
 
@@ -169,6 +249,16 @@
         const firebaseConfig = { apiKey: "AIzaSyDa_CETs4heTzM7Gwf0GRTxB5td5QcVBrM", databaseURL: "https://bettle-trinca-default-rtdb.firebaseio.com/" };
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
+
+        // MODAL LOGIC
+        const modal = document.getElementById('modal-regras');
+        const abrirRegras = () => modal.style.display = 'flex';
+        const fecharRegras = () => modal.style.display = 'none';
+        document.getElementById('btn-regras-lobby').onclick = abrirRegras;
+        document.getElementById('btn-regras-game').onclick = abrirRegras;
+        document.getElementById('btn-fechar-regras').onclick = fecharRegras;
+        document.getElementById('btn-entendi-regras').onclick = fecharRegras;
+        window.onclick = (e) => { if(e.target == modal) fecharRegras(); };
 
         let gameRef = null, myID = null, oppID = null, currentRoomCode = null;
         let playerHand = [], selectedIdx = null, isMyTurn = false, bothOnline = false;
@@ -248,7 +338,6 @@
                 const data = snapshot.val();
                 if (!data) return;
 
-                // DETECÇÃO DE DESCONEXÃO
                 const isOppOnline = (oppID === 'p1' ? data.p1_online : data.p2_online);
                 if (bothOnline && isOppOnline === false) {
                     document.getElementById('disconnect-overlay').style.display = 'flex';
@@ -258,7 +347,6 @@
 
                 if (data.resetRequest === 'accepted') {
                     limparMesaVisualmente();
-                    // Limpar todos os overlays
                     document.getElementById('end-game-overlay').style.display = 'none';
                     document.getElementById('reset-request-overlay').style.display = 'none';
                     if (myID === 'p1') window.reiniciarJogo();
@@ -268,11 +356,10 @@
                 const resOverlay = document.getElementById('reset-request-overlay');
                 if (data.resetRequest) {
                     resOverlay.style.display = 'flex';
+                    resOverlay.style.zIndex = '9999';
                     document.getElementById('reset-msg').innerText = data.resetRequest === myID ? "AGUARDANDO OPONENTE..." : "OPONENTE QUER JOGAR NOVAMENTE";
                     document.getElementById('reset-btns').style.display = data.resetRequest === myID ? 'none' : 'flex';
-                } else { 
-                    resOverlay.style.display = 'none'; 
-                }
+                } else { resOverlay.style.display = 'none'; }
 
                 if (data.currentTrack) syncMusic(data.currentTrack);
                 if ((data.p1_online && data.p2_online) && !bothOnline) playSnd('snd-match');
