@@ -99,36 +99,30 @@
     <div id="modal-regras">
         <div class="modal-content">
             <span class="close-modal" id="btn-fechar-regras">&times;</span>
-            
             <h2 style="color: var(--accent); border-bottom: 2px solid var(--accent); text-align:center;">📖 Livro de Regras: Bettle Trinca</h2>
             <p>O <b>Bettle Trinca</b> é um jogo de estratégia e antecipação para dois jogadores. O objetivo é vencer a disputa em <b>3 das 5 colunas</b> da mesa, formando as melhores combinações de 3 cartas (Trincas).</p>
-            
             <h3>1. O Baralho</h3>
             <ul>
                 <li><b>Total:</b> 54 cartas (Baralho padrão de 52 cartas + 2 Coringas).</li>
                 <li><b>Coringas (JK):</b> São cartas "wild". Elas assumem automaticamente o valor e naipe necessários para formar a maior combinação possível na coluna onde forem jogadas.</li>
             </ul>
-
             <h3>2. Fluxo da Partida</h3>
             <ul>
                 <li>Cada jogador começa com <b>5 cartas na mão</b>.</li>
                 <li>A cada turno, o jogador deve baixar <b>1 carta</b> em qualquer uma das suas 5 colunas.</li>
-                <li>Imediatamente após jogar, o jogador compra uma nova carta do deck (mantendo sempre 5 na mão, até o deck acabar).</li>
+                <li>Imediatamente após jogar, o jogador compra uma nova carta do deck.</li>
                 <li>O turno passa para o oponente.</li>
             </ul>
-
             <h3>3. A Coluna Zero (Estratégia)</h3>
             <p>A primeira coluna (Coluna 0) é especial:</p>
             <ul>
                 <li>As cartas jogadas ali ficam <b>viradas para baixo (ocultas)</b> para o oponente.</li>
                 <li>Elas só são reveladas quando ambos os jogadores completarem 3 cartas nessa coluna ou quando o jogo terminar.</li>
-                <li><b>Dica:</b> Use a Coluna 0 para esconder seus Coringas ou blefar!</li>
             </ul>
-
             <h3>4. Como Vencer uma Coluna</h3>
             <p>Uma coluna é disputada quando ambos os jogadores colocam 3 cartas nela. A hierarquia de forças (da maior para a menor) é:</p>
             <ol>
-                <li><b>Trinca de Ás:</b> Três cartas "A" (A pontuação máxima).</li>
+                <li><b>Trinca de Ás:</b> Três cartas "A".</li>
                 <li><b>Straight Flush:</b> Sequência de 3 cartas do mesmo naipe.</li>
                 <li><b>Trinca:</b> Três cartas do mesmo valor.</li>
                 <li><b>Flush:</b> Três cartas do mesmo naipe, sem sequência.</li>
@@ -136,40 +130,20 @@
                 <li><b>Par:</b> Duas cartas do mesmo valor.</li>
                 <li><b>Carta Alta:</b> Soma dos valores das 3 cartas.</li>
             </ol>
-            <p><i>*Critério de Desempate: Se houver empate na combinação, vence quem completou a coluna primeiro.</i></p>
-
-            <h2 style="color: var(--win); border-bottom: 2px solid var(--win); text-align:center;">🕹️ Tutorial: Passo a Passo</h2>
-            
-            <h3>Passo 1: Criar ou Entrar</h3>
-            <ul>
-                <li><b>Criar Sala:</b> Clique em "Criar Sala", copie o código e envie para seu amigo.</li>
-                <li><b>Entrar na Sala:</b> Cole o código que seu amigo enviou e clique em "Entrar".</li>
-            </ul>
-
-            <h3>Passo 2: Selecionar e Jogar</h3>
-            <ul>
-                <li>Clique em uma carta da sua mão (ela subirá levemente).</li>
-                <li>Clique em um dos 5 Slots do seu lado para baixar a carta.</li>
-                <li>O som de "Drop" confirmará a jogada e o turno passa.</li>
-            </ul>
-
-            <h3>Passo 3: Monitorar o Placar</h3>
-            <ul>
-                <li>Veja as <b>bolinhas (dots)</b> ao lado das colunas.</li>
-                <li>Uma bolinha acesa significa vitória naquela coluna.</li>
-                <li>O primeiro a acender 3 bolinhas ganha a rodada!</li>
-            </ul>
-
-            <h3>Passo 4: Reiniciar</h3>
-            <p>Basta clicar em <b>"Jogar Novamente"</b>. O oponente receberá um aviso e, assim que aceitar, um novo baralho será distribuído.</p>
-
             <button class="lobby-btn lobby-btn-create" style="margin-top: 20px;" id="btn-entendi-regras">ENTENDI!</button>
         </div>
+    </div>
+
+    <div id="disconnect-overlay">
+        <h1 style="color: var(--loss); font-size: 3em;">OPONENTE SAIU</h1>
+        <p style="font-size: 1.2em; opacity: 0.8;">A conexão com o outro jogador foi perdida.</p>
+        <p style="margin-top: 20px; color: var(--accent);">Voltando ao Lobby em 2 segundos...</p>
     </div>
 
     <div id="lobby-overlay">
         <div class="lobby-box" id="lobby-step-1">
             <h1>Bettle Trinca</h1>
+            <button class="lobby-btn" style="background: var(--win); color: white; margin-bottom: 20px;" id="btn-matchmaking">ENCONTRAR PARTIDA</button>
             <button class="lobby-btn lobby-btn-create" id="btn-criar-sala">CRIAR SALA</button>
             <button class="lobby-btn" style="background:transparent; color:white; border:1px solid #334155;" id="btn-entrar-sala">ENTRAR EM SALA</button>
             <button class="btn-ui" style="margin-top: 15px; width: 100%; color: var(--accent); border-color: var(--accent);" id="btn-regras-lobby">COMO JOGAR?</button>
@@ -244,7 +218,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, set, onValue, get, update, onDisconnect } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, set, onValue, get, update, onDisconnect, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
         const firebaseConfig = { apiKey: "AIzaSyDa_CETs4heTzM7Gwf0GRTxB5td5QcVBrM", databaseURL: "https://bettle-trinca-default-rtdb.firebaseio.com/" };
         const app = initializeApp(firebaseConfig);
@@ -339,9 +313,12 @@
                 if (!data) return;
 
                 const isOppOnline = (oppID === 'p1' ? data.p1_online : data.p2_online);
+                
+                // LÓGICA DE DESCONEXÃO: Aviso Visual + Som de Perda (effect_06) + Redirecionamento
                 if (bothOnline && isOppOnline === false) {
                     document.getElementById('disconnect-overlay').style.display = 'flex';
-                    playSnd('snd-lose');
+                    playSnd('snd-lose'); // Toca effect_06.mp3
+                    setTimeout(() => { location.reload(); }, 2000); // 2 segundos para voltar
                     return;
                 }
 
@@ -517,6 +494,45 @@
         };
 
         window.resetPlacar = async () => { if (gameRef) await update(gameRef, { wins: { p1: 0, p2: 0 } }); };
+
+        // --- MATCHMAKING ---
+        document.getElementById('btn-matchmaking').onclick = async () => {
+            const btn = document.getElementById('btn-matchmaking');
+            btn.innerText = "PROCURANDO..."; btn.disabled = true;
+            try {
+                const roomsSnap = await get(ref(db, `rooms`));
+                const allRooms = roomsSnap.val() || {};
+                const now = Date.now();
+                const cincoMin = 5 * 60 * 1000;
+                let roomFound = null;
+                for (const code in allRooms) {
+                    const r = allRooms[code];
+                    if (code.length === 7 && r.p1_online === true && r.p2_online === false && r.createdAt && (now - r.createdAt < cincoMin)) {
+                        roomFound = code; break;
+                    }
+                }
+                if (roomFound) {
+                    currentRoomCode = roomFound; myID = 'p2'; oppID = 'p1';
+                    gameRef = ref(db, `rooms/${roomFound}`);
+                    await update(gameRef, { p2_online: true });
+                    onDisconnect(ref(db, `rooms/${roomFound}/p2_online`)).set(false);
+                    startGame();
+                } else {
+                    const code = Math.random().toString(36).substring(2, 9).toUpperCase();
+                    currentRoomCode = code; myID = 'p1'; oppID = 'p2';
+                    gameRef = ref(db, `rooms/${code}`);
+                    await set(gameRef, { 
+                        createdAt: serverTimestamp(), p1_online: true, p2_online: false, turn: 'waiting', wins: {p1:0, p2:0}, deckCount: 0, currentTrack: Math.floor(Math.random()*10)+1, maos: { p1: [], p2: [] }, board: { p1: {col0:[],col1:[],col2:[],col3:[],col4:[]}, p2: {col0:[],col1:[],col2:[],col3:[],col4:[]} } 
+                    });
+                    onDisconnect(ref(db, `rooms/${code}/p1_online`)).set(false);
+                    document.getElementById('lobby-step-1').style.display = 'none';
+                    const s2 = document.getElementById('lobby-step-2'); s2.style.display='block';
+                    s2.innerHTML = `<button class="btn-ui" onclick="location.reload()" style="position:absolute; top:10px; left:10px;">Voltar</button><h2 style="margin-top:30px;">Procurando...</h2><div class="room-code-display">MATCH</div><p>Aguardando oponente entrar...</p>`;
+                    let jaIniciou = false;
+                    onValue(gameRef, (s) => { if(s.val()?.p2_online && !jaIniciou) { jaIniciou = true; setTimeout(() => { window.reiniciarJogo(); startGame(); }, 500); } });
+                }
+            } catch (err) { console.error(err); btn.innerText = "ENCONTRAR PARTIDA"; btn.disabled = false; }
+        };
 
         document.getElementById('btn-criar-sala').onclick = async () => {
             const code = Math.random().toString(36).substring(2,7).toUpperCase();
