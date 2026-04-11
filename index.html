@@ -6,11 +6,11 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         :root { --bg: #0f172a; --accent: #8e44ad; --win: #2ecc71; --loss: #e74c3c; }
-        body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; margin: 0; padding-bottom: 50px; overflow-x: hidden; }
+        body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; margin: 0; min-height: 100vh; overflow-x: hidden; }
 
         /* ANIMAÇÕES */
-        @keyframes drawCardAnim { 0% { opacity: 0; transform: translateY(40px) scale(0.8); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
-        .new-card-anim { opacity: 0; animation: drawCardAnim 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        @keyframes drawCardAnim { 0% { opacity: 0; transform: translateY(100px) scale(0.8) rotate(var(--fan-rotate, 0deg)); } 100% { opacity: 1; transform: translateY(var(--fan-y, 0px)) scale(1) rotate(var(--fan-rotate, 0deg)); } }
+        .new-card-anim { animation: drawCardAnim 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) backwards; }
         @keyframes dropOnTable { 0% { opacity: 0; transform: scale(1.6) translateY(-30px); filter: brightness(2); } 100% { opacity: 1; transform: scale(1) translateY(0); filter: brightness(1); } }
         .slot-card-anim { animation: dropOnTable 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.2) forwards; }
 
@@ -22,8 +22,8 @@
         .global-wins { position: absolute; top: 20px; right: 20px; background: #1e293b; padding: 20px 30px; border-radius: 12px; border: 2px solid #334155; font-size: 18px; z-index: 1000; text-align: center; font-weight: bold; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
         .global-wins span { font-size: 28px; color: var(--win); display: block; margin-top: 5px; }
 
-        .top-bar { display: flex; gap: 20px; align-items: center; margin: 25px; z-index: 1000; }
-        .btn-ui { background: #1e293b; color: white; border: 1px solid #334155; padding: 8px 18px; cursor: pointer; border-radius: 5px; font-weight: bold; font-size: 10px; text-transform: uppercase; transition: 0.2s; }
+        .top-bar { display: flex; justify-content: center; width: 100%; gap: 30px; align-items: center; margin: 30px 0 10px 0; z-index: 1000; }
+        .btn-ui { background: #1e293b; color: white; border: 1px solid #334155; padding: 12px 24px; cursor: pointer; border-radius: 5px; font-weight: bold; font-size: 12px; text-transform: uppercase; transition: 0.2s; }
         .btn-ui:hover { background: var(--accent); }
 
         /* MODAL DE REGRAS COMPLETO */
@@ -39,31 +39,50 @@
         .btn-regras-game:hover { transform: scale(1.1); background: #9b59b6; }
 
         /* TABULEIRO */
-        .status-msg { font-size: 1.6em; font-weight: bold; min-width: 320px; text-align: center; text-transform: uppercase; }
+        .status-msg { font-size: 2.2em; font-weight: bold; min-width: 350px; text-align: center; text-transform: uppercase; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
         .status-your { color: var(--win); }
         .status-opp { color: #f1c40f; }
         .status-waiting { color: #ffffff; opacity: 0.6; }
 
-        .game-world { display: flex; align-items: center; gap: 60px; margin-top: 10px; position: relative; }
-        .row { display: grid; grid-template-columns: repeat(5, 110px); gap: 15px; margin: 15px 0; position: relative; }
-        .slot { width: 110px; height: 170px; border: 2px solid #1e293b; border-radius: 12px; background: rgba(255,255,255,0.02); position: relative; cursor: pointer; transition: 0.2s; z-index: 10; }
+        .game-world { display: flex; align-items: center; justify-content: center; gap: 60px; margin-top: 20px; position: relative; width: 100%; flex-grow: 1; }
+        .row { display: grid; grid-template-columns: repeat(5, 180px); gap: 30px; margin: 30px 0; position: relative; }
+        .slot { width: 180px; height: 300px; border: 2px solid #1e293b; border-radius: 12px; background: rgba(255,255,255,0.02); position: relative; cursor: pointer; transition: 0.2s; z-index: 10; }
         .slot:hover { background: rgba(142, 68, 173, 0.1); border-color: var(--accent); }
         .slot[data-col="0"] { border: 2px dashed var(--accent); }
 
-        .round-markers { display: flex; flex-direction: column; gap: 12px; position: absolute; left: -45px; height: 100%; justify-content: center; pointer-events: none; }
-        .dot { width: 14px; height: 14px; background: #1e293b; border-radius: 50%; border: 2px solid #334155; }
-        .dot.active { background: var(--win); border-color: #fff; box-shadow: 0 0 12px var(--win); }
+        .round-markers { display: flex; flex-direction: column; gap: 20px; position: absolute; left: -50px; height: 100%; justify-content: center; pointer-events: none; }
+        .dot { width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
+        .dot::after { content: "👑"; font-size: 34px; filter: grayscale(1) brightness(0.4) opacity(0.5); transform: scale(0.8); transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: block; }
+        .dot.active::after { filter: drop-shadow(0 0 6px rgba(241,196,15,0.7)) brightness(1.1); transform: scale(1.05); opacity: 1; }
 
-        .card-body { width: 90px; height: 125px; background: white; color: black; border-radius: 8px; padding: 10px; box-sizing: border-box; border: 1px solid #999; display: flex; flex-direction: column; position: absolute; left: 8px; box-shadow: 0 5px 10px rgba(0,0,0,0.4); pointer-events: none; }
-        .card-info { display: flex; justify-content: space-between; font-weight: 900; font-size: 1.5em; line-height: 0.9; }
+        .card-body { width: 145px; height: 210px; background: white; color: black; border-radius: 12px; padding: 0; box-sizing: border-box; border: 1px solid #999; display: flex; flex-direction: column; position: absolute; left: 16px; box-shadow: 0 5px 12px rgba(0,0,0,0.4); pointer-events: none; overflow: hidden; }
+        .card-info { padding: 12px; display: flex; justify-content: space-between; font-weight: 900; font-size: 2em; line-height: 0.9; width: 100%; box-sizing: border-box; }
         .red { color: #e74c3c !important; }
         .card-back { background: #1e293b !important; border: 2px solid #64748b !important; color: transparent !important; background-image: radial-gradient(circle, #334155 1px, transparent 1px) !important; background-size: 8px 8px !important; }
         .joker-card { background: #f1c40f !important; }
+        .card-img-wrapper { background: transparent !important; border: none !important; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
 
-        #hand-area { width: 100%; display: flex; justify-content: center; margin-top: 40px; padding: 20px; background: rgba(0,0,0,0.2); position: relative; z-index: 1000; }
-        #hand { display: flex; gap: 15px; min-height: 140px; }
-        .hand-card { cursor: pointer !important; transition: 0.3s; position: relative; pointer-events: auto !important; }
-        .hand-card.selected { transform: translateY(-25px); outline: 4px solid var(--win); box-shadow: 0 0 20px var(--win); }
+        .btn-combos-game { position: fixed; bottom: 20px; right: 80px; width: 50px; height: 50px; border-radius: 50%; background: #3498db; color: white; border: none; font-size: 20px; font-weight: bold; cursor: pointer; z-index: 2000; box-shadow: 0 4px 15px rgba(0,0,0,0.5); transition: 0.3s; display: flex; align-items: center; justify-content: center; }
+        .btn-combos-game:hover { transform: scale(1.1); background: #2980b9; }
+
+        .combo-label { position: absolute; width: 96%; left: 2%; text-align: center; top: 55%; background: rgba(15, 23, 42, 0.95); border: 2px solid #64748b; color: #fff; padding: 8px; font-size: 16px; font-weight: 900; text-transform: uppercase; border-radius: 8px; z-index: 100; box-shadow: 0 10px 25px rgba(0,0,0,0.8); opacity: 0; pointer-events: none; animation: popupCombo 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; line-height: 1.2; box-sizing: border-box; }
+        .combo-label.win { border-color: var(--win); color: var(--win); box-shadow: 0 0 20px var(--win), inset 0 0 15px rgba(46,204,113,0.2); }
+        .combo-label.loss { border-color: var(--loss); color: var(--loss); filter: grayscale(1); opacity: 0.9; }
+        @keyframes popupCombo { 0% { opacity: 0; transform: translateY(20px) rotate(-15deg) scale(0.4); } 100% { opacity: 1; transform: translateY(-50%) rotate(-4deg) scale(1); } }
+
+        #hand-area { width: 100vw; display: flex; justify-content: center; margin-top: auto; padding: 0; background: transparent; position: relative; z-index: 1000; box-sizing: border-box; pointer-events: none; }
+        #hand { display: flex; min-height: 250px; align-items: center; justify-content: center; transform: translateY(60px); }
+        #hand .card-body { width: 220px !important; height: 320px !important; position: relative !important; left: 0 !important; }
+        .hand-card { cursor: pointer !important; transition: transform 0.3s, margin 0.3s, box-shadow 0.3s; position: relative; pointer-events: auto !important; transform-origin: bottom center; transform: translateY(var(--fan-y, 0px)) rotate(var(--fan-rotate, 0deg)); }
+        .hand-card:hover { transform: translateY(calc(var(--fan-y, 0px) - 30px)) rotate(var(--fan-rotate, 0deg)) scale(1.05); z-index: 50 !important; }
+        @keyframes cardGlowSpin {
+            0%   { box-shadow: 0 -10px 15px 3px #ffd700, 0 10px 15px 3px #b8860b; }
+            25%  { box-shadow: 10px 0 15px 3px #ffd700, -10px 0 15px 3px #b8860b; }
+            50%  { box-shadow: 0 10px 15px 3px #ffd700, 0 -10px 15px 3px #b8860b; }
+            75%  { box-shadow: -10px 0 15px 3px #ffd700, 10px 0 15px 3px #b8860b; }
+            100% { box-shadow: 0 -10px 15px 3px #ffd700, 0 10px 15px 3px #b8860b; }
+        }
+        .hand-card.selected { transform: translateY(calc(var(--fan-y, 0px) - 60px)) rotate(var(--fan-rotate, 0deg)) scale(1.05); z-index: 100 !important; border-color: #ffd700 !important; animation: cardGlowSpin 1s linear infinite; }
 
         /* OVERLAYS */
         #lobby-overlay { display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 3000; justify-content: center; align-items: center; flex-direction: column; }
@@ -78,8 +97,8 @@
         #reset-request-overlay { z-index: 5000; }
         #disconnect-overlay { z-index: 6000; background: rgba(15, 23, 42, 0.98); }
         
-        .guide-section { margin-top: 60px; border-top: 1px solid #334155; padding: 30px; width: 95%; background: rgba(15,23,42,0.5); }
-        .combo-grid { display: flex; gap: 30px; justify-content: center; margin-top: 30px; flex-wrap: wrap; }
+        #modal-combos { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; justify-content: center; align-items: center; }
+        .combo-grid { display: flex; gap: 30px; justify-content: center; margin-top: 10px; flex-wrap: wrap; max-height: 70vh; overflow-y: auto; padding: 10px; }
         .mini-slot { width: 95px; height: 150px; position: relative; border: 1px solid #334155; border-radius: 8px; background: rgba(0,0,0,0.3); }
 
         .btn-copy-colar { background: #334155; border: none; color: white; padding: 8px 15px; border-radius: 6px; font-size: 11px; cursor: pointer; margin-top: 10px; text-transform: uppercase; font-weight: bold; }
@@ -134,6 +153,15 @@
         </div>
     </div>
 
+    <!-- MODAL COMBOS -->
+    <div id="modal-combos">
+        <div class="modal-content" style="max-width: 800px;">
+            <span class="close-modal" id="btn-fechar-combos">&times;</span>
+            <h2 style="color: #3498db; border-bottom: 2px solid #3498db; text-align:center;">🏆 Combos e Valores</h2>
+            <div class="combo-grid" id="combo-list"></div>
+        </div>
+    </div>
+
     <div id="disconnect-overlay">
         <h1 style="color: var(--loss); font-size: 3em;">OPONENTE SAIU</h1>
         <p style="font-size: 1.2em; opacity: 0.8;">A conexão com o outro jogador foi perdida.</p>
@@ -153,6 +181,7 @@
 
     <div id="game-container" style="display:none;">
         <button class="btn-regras-game" id="btn-regras-game">?</button>
+        <button class="btn-combos-game" id="btn-combos-game">🏆</button>
 
         <div class="volume-controls">
             <div class="vol-item"><span>MUSICA</span><input type="range" id="vol-bg" min="0" max="1" step="0.05" value="0.1"></div>
@@ -193,6 +222,7 @@
         </div>
 
         <div class="game-world">
+            <div style="width: 180px; flex-shrink: 0;" class="spacer-left"></div>
             <div id="board">
                 <div class="row" id="opp-row">
                     <div class="round-markers" id="dots-opp"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
@@ -204,16 +234,12 @@
                     <div class="slot" data-col="0"></div><div class="slot" data-col="1"></div><div class="slot" data-col="2"></div><div class="slot" data-col="3"></div><div class="slot" data-col="4"></div>
                 </div>
             </div>
-            <div class="deck-visual" style="width: 110px; height: 150px; background: #1e293b; border: 2px solid #64748b; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                <div id="count" style="font-size:2em; font-weight:bold;">--</div><div>RESTAM</div>
+            <div class="deck-visual" style="width: 180px; height: 270px; background: #1e293b; border: 2px solid #64748b; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0;">
+                <div id="count" style="font-size:2.5em; font-weight:bold;">--</div><div>RESTAM</div>
             </div>
         </div>
 
         <div id="hand-area"><div id="hand"></div></div>
-
-        <div class="guide-section">
-            <div class="combo-grid" id="combo-list"></div>
-        </div>
     </div>
 
     <script type="module">
@@ -224,15 +250,50 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
+        function getComboName(score) {
+            if (score >= 7014) return "TRINCA ÁS";
+            if (score >= 7000) return "TRINCA";
+            if (score >= 6000) return "STR. FLUSH";
+            if (score >= 5000) return "FLUSH";
+            if (score >= 4000) return "SEQUÊNCIA";
+            if (score >= 2000) return "PAR";
+            return "CARTA ALTA";
+        }
+
+        // Função universal para renderizar a carta (usando a imagem do Asset caso disponível)
+        function getCardInner(v, s, type) {
+            if (type !== 'joker') {
+                if (s === '♥') {
+                    const mapName = {'A':'ace', 'K':'king', 'Q':'queen', 'J':'Jack'};
+                    let valName = mapName[v] || v;
+                    return `<img src="assets/cards/${valName}_hearts.png" style="width: 100%; height: 100%; object-fit: fill; display: block;">`;
+                } else if (s === '♦') {
+                    const mapName = {'A':'ace', 'K':'king', 'Q':'queen', 'J':'jack'};
+                    let valName = mapName[v] || v;
+                    return `<img src="assets/cards/${valName}_diamonds.png" style="width: 100%; height: 100%; object-fit: fill; display: block;">`;
+                }
+            }
+            return `<div class="card-info"><span>${v}</span><span>${s}</span></div>`;
+        }
+
         // MODAL LOGIC
-        const modal = document.getElementById('modal-regras');
-        const abrirRegras = () => modal.style.display = 'flex';
-        const fecharRegras = () => modal.style.display = 'none';
+        const modalRegras = document.getElementById('modal-regras');
+        const modalCombos = document.getElementById('modal-combos');
+        const abrirRegras = () => modalRegras.style.display = 'flex';
+        const fecharRegras = () => modalRegras.style.display = 'none';
+        const abrirCombos = () => modalCombos.style.display = 'flex';
+        const fecharCombos = () => modalCombos.style.display = 'none';
+
         document.getElementById('btn-regras-lobby').onclick = abrirRegras;
         document.getElementById('btn-regras-game').onclick = abrirRegras;
         document.getElementById('btn-fechar-regras').onclick = fecharRegras;
         document.getElementById('btn-entendi-regras').onclick = fecharRegras;
-        window.onclick = (e) => { if(e.target == modal) fecharRegras(); };
+        document.getElementById('btn-combos-game').onclick = abrirCombos;
+        document.getElementById('btn-fechar-combos').onclick = fecharCombos;
+        window.onclick = (e) => {
+            if(e.target == modalRegras) fecharRegras();
+            if(e.target == modalCombos) fecharCombos();
+        };
 
         let gameRef = null, myID = null, oppID = null, currentRoomCode = null;
         let playerHand = [], selectedIdx = null, isMyTurn = false, bothOnline = false;
@@ -362,14 +423,15 @@
                     const mc = data.board?.[myID]?.[`col${i}`] || [];
                     const oc = data.board?.[oppID]?.[`col${i}`] || [];
                     const showAll = (mc.length === 3 && oc.length === 3);
-                    let res = null;
+                    let res = null, mName = "", oName = "";
                     if (showAll) {
                         const mp = evalMao(mc), op = evalMao(oc);
+                        mName = getComboName(mp); oName = getComboName(op);
                         if (mp > op) { res = 'win'; mWins++; } else if (op > mp) { res = 'loss'; oWins++; }
                         else { const tM = data.times?.[myID]?.[`col${i}`] || 0; const tO = data.times?.[oppID]?.[`col${i}`] || 0; if (tM < tO) { res = 'win'; mWins++; } else { res = 'loss'; oWins++; } }
                     }
-                    renderSlot('play-row', i, mc, false, res==='win'?'winner':(res==='loss'?'loser':''), showAll);
-                    renderSlot('opp-row', i, oc, true, res==='loss'?'winner':(res==='win'?'loser':''), showAll);
+                    renderSlot('play-row', i, mc, false, res==='win'?'winner':(res==='loss'?'loser':''), showAll, mName);
+                    renderSlot('opp-row', i, oc, true, res==='loss'?'winner':(res==='win'?'loser':''), showAll, oName);
                 }
                 updateDots('dots-my', mWins); updateDots('dots-opp', oWins);
 
@@ -388,17 +450,30 @@
             const h = document.getElementById('hand');
             if (playerHand.length === 0) { h.innerHTML = ''; return; }
             h.innerHTML = '';
+            const total = playerHand.length;
             playerHand.forEach((c, i) => {
                 const d = document.createElement('div');
-                d.className = `card-body hand-card ${c.color} ${selectedIdx === i ? 'selected' : ''} ${c.type === 'joker' ? 'joker-card' : ''}`;
+                let isImg = ((c.s === '♥' || c.s === '♦') && c.type !== 'joker');
+                d.className = `card-body hand-card ${c.color} ${selectedIdx === i ? 'selected' : ''} ${c.type === 'joker' ? 'joker-card' : ''} ${isImg ? 'card-img-wrapper' : ''}`;
                 if (isInitialDeal || i >= lastHandSize) { 
-                    d.style.opacity = "0"; d.classList.add('new-card-anim'); 
+                    d.classList.add('new-card-anim'); 
                     const delay = isInitialDeal ? (i * 150) : 0;
                     d.style.animationDelay = `${delay}ms`; 
                     setTimeout(() => { playSnd((i % 2 === 0) ? 'snd-drop1' : 'snd-drop2'); }, delay);
                 }
-                d.style.position = "relative"; d.style.left = "0";
-                d.innerHTML = `<div class="card-info"><span>${c.v}</span><span>${c.s}</span></div>`;
+                
+                const offsetFromCenter = i - (total - 1) / 2;
+                const angle = offsetFromCenter * 8; 
+                const translateY = Math.abs(offsetFromCenter) * Math.abs(offsetFromCenter) * 3; 
+                
+                d.style.position = "relative"; 
+                d.style.left = "0";
+                d.style.marginLeft = i === 0 ? "0" : "-90px";
+                d.style.setProperty('--fan-rotate', `${angle}deg`);
+                d.style.setProperty('--fan-y', `${translateY}px`);
+                d.style.zIndex = i + 1;
+                
+                d.innerHTML = getCardInner(c.v, c.s, c.type);
                 d.onclick = () => { if(isMyTurn && bothOnline) { if(selectedIdx !== i) playSnd('snd-select'); selectedIdx = (selectedIdx === i ? null : i); updateHandUI(); } };
                 h.appendChild(d);
             });
@@ -406,24 +481,47 @@
             lastHandSize = playerHand.length;
         }
 
-        function renderSlot(row, idx, cards, isOpp, cls, reveal) {
+        function renderSlot(row, idx, cards, isOpp, cls, reveal, comboName) {
             const s = document.getElementById(row).querySelector(`[data-col="${idx}"]`);
             if (cards.length === 0) { s.innerHTML = ''; return; }
-            const currentCardsCount = s.children.length;
             s.style.boxShadow = cls === 'winner' ? 'inset 0 0 20px var(--win)' : (cls === 'loser' ? 'inset 0 0 20px var(--loss)' : 'none');
             const shouldShowMyColZero = (!isOpp && idx == 0 && cards.length === 3);
-            if (reveal || shouldShowMyColZero) s.innerHTML = '';
+            
+            const currentCardsCount = s.querySelectorAll('.card-body').length;
+            const isAlreadyRevealed = (reveal && currentCardsCount === 3 && !s.querySelector('.card-back'));
+            const isAlreadyShowMyZero = (shouldShowMyColZero && currentCardsCount === 3 && !s.querySelector('.card-back'));
+
+            if ((reveal && !isAlreadyRevealed) || (shouldShowMyColZero && !isAlreadyShowMyZero)) {
+                s.innerHTML = ''; 
+            }
+            
             cards.forEach((c, i) => {
-                if (reveal || shouldShowMyColZero || i >= currentCardsCount) {
+                if ((reveal && !isAlreadyRevealed) || (shouldShowMyColZero && !isAlreadyShowMyZero) || i >= currentCardsCount) {
                     const div = document.createElement('div');
                     let hidden = (idx == 0 && !reveal && (isOpp || cards.length < 3));
-                    div.className = `card-body ${c.color} ${c.type === 'joker' && !hidden ? 'joker-card' : ''} ${hidden ? 'card-back' : ''}`;
+                    let isImg = ((c.s === '♥' || c.s === '♦') && c.type !== 'joker');
+                    div.className = `card-body ${c.color} ${c.type === 'joker' && !hidden ? 'joker-card' : ''} ${hidden ? 'card-back' : ''} ${!hidden && isImg ? 'card-img-wrapper' : ''}`;
                     if (!reveal && !shouldShowMyColZero && i >= currentCardsCount) div.classList.add('slot-card-anim'); 
-                    div.style.top = (i * 30) + "px";
-                    if(!hidden) div.innerHTML = `<div class="card-info"><span>${c.v}</span><span>${c.s}</span></div>`;
+                    div.style.top = (i * 45) + "px";
+                    if(!hidden) div.innerHTML = getCardInner(c.v, c.s, c.type);
                     s.appendChild(div);
                 }
             });
+
+            if (comboName && reveal) {
+                let lbl = s.querySelector('.combo-label');
+                if (!lbl) {
+                    lbl = document.createElement('div');
+                    lbl.className = `combo-label ${cls === 'winner' ? 'win' : (cls === 'loser' ? 'loss' : '')}`;
+                    lbl.innerHTML = comboName;
+                    s.appendChild(lbl);
+                    if (cls === 'loser') {
+                        s.querySelectorAll('.card-body').forEach(cd => cd.style.filter = "brightness(0.4) grayscale(0.8)");
+                    } else if (cls === 'winner') {
+                        s.querySelectorAll('.card-body').forEach(cd => cd.style.filter = "drop-shadow(0 0 8px var(--win))");
+                    }
+                }
+            }
         }
 
         function finishGameUI(winnerID) {
@@ -578,7 +676,11 @@
                 comboData.forEach(g => {
                     const box = document.createElement('div');
                     let h = `<span style="font-size:10px; font-weight:bold; color:#94a3b8">${g.n}</span><div class="mini-slot">`;
-                    g.c.forEach((card, i) => { const v = card.slice(0, -1), s = card.slice(-1), color = (s === '♥' || s === '♦') ? 'red' : 'black'; h += `<div class="card-body ${color}" style="top:${i * 28}px; width:75px; height:105px; left:9px; font-size:12px;"><div class="card-info"><span>${v}</span><span>${s}</span></div></div>`; });
+                    g.c.forEach((card, i) => { 
+                        const v = card.slice(0, -1), s = card.slice(-1), color = (s === '♥' || s === '♦') ? 'red' : 'black'; 
+                        let isImg = (s === '♥' || s === '♦');
+                        h += `<div class="card-body ${color} ${isImg ? 'card-img-wrapper' : ''}" style="top:${i * 28}px; width:75px; height:105px; left:9px; font-size:12px;">${getCardInner(v, s, 'normal')}</div>`; 
+                    });
                     box.innerHTML = h + `</div>`; gList.appendChild(box);
                 });
             }
