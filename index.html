@@ -881,8 +881,87 @@
         }
 
         @media screen and (max-width: 1024px) and (orientation: portrait) {
-            #landscape-warning { display: flex; }
-            #game-container, #lobby-overlay, .global-wins, .room-info-box { display: none !important; }
+            body.force-landscape #landscape-warning { display: flex; }
+            body.force-landscape #game-container, 
+            body.force-landscape .global-wins, 
+            body.force-landscape .room-info-box { display: none !important; }
+        }
+
+        /* AJUSTES MOBILE / TELAS PEQUENAS */
+        @media screen and (max-width: 1200px) {
+            .row {
+                grid-template-columns: repeat(5, 130px);
+                gap: 10px;
+            }
+            .slot {
+                width: 130px;
+                height: 250px;
+            }
+            .card-body {
+                width: 115px;
+                height: 165px;
+                left: 7px;
+            }
+            #hand .card-body {
+                width: 120px !important;
+                height: 175px !important;
+            }
+            .hand-card {
+                margin-left: -50px !important;
+            }
+            .global-wins, .room-info-box {
+                padding: 4px 6px;
+                font-size: 8px;
+            }
+            .global-wins span, .room-info-box span {
+                font-size: 12px;
+            }
+            .btn-ui {
+                padding: 6px 10px;
+                font-size: 7px;
+            }
+            .status-msg {
+                font-size: 0.7em;
+                min-width: 150px;
+                padding: 5px 10px;
+            }
+            .top-bar {
+                margin: 10px 0;
+                gap: 10px;
+            }
+            .volume-controls {
+                left: 5px;
+                bottom: 5px;
+                padding: 5px;
+            }
+            .vol-item input {
+                width: 30px;
+            }
+        }
+
+        /* ESTILOS REGRAS */
+        .rules-row {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 25px;
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            border-left: 4px solid var(--accent);
+        }
+        .rules-text { flex: 1; }
+        .rules-img-stack {
+            display: flex;
+            gap: 5px;
+            min-width: 150px;
+            justify-content: center;
+        }
+        .rules-card-img {
+            width: 70px;
+            height: 105px;
+            border: 2px solid #000;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+            image-rendering: pixelated;
         }
     </style>
 </head>
@@ -905,47 +984,97 @@
     <audio id="bg-music" preload="auto"></audio>
 
     <div id="modal-regras">
-        <div class="modal-content">
+        <div class="modal-content" style="max-width: 750px;">
             <span class="close-modal" id="btn-fechar-regras">&times;</span>
-            <h2
-                style="color: var(--accent); border-bottom: 4px solid var(--accent); text-align:center; font-size: 14px;">
-                📖 LIVRO DE REGRAS</h2>
-            <p>O <b>Bettle Trinca</b> é um jogo de estratégia e antecipação para dois jogadores. O objetivo é vencer a
-                disputa em <b>3 das 5 colunas</b> da mesa, formando as melhores combinações de 3 cartas (Trincas).</p>
-            <h3>1. O Baralho</h3>
-            <ul>
-                <li><b>Total:</b> 54 cartas (Baralho padrão de 52 cartas + 2 Coringas).</li>
-                <li><b>Coringas (JK):</b> São cartas "wild". Elas assumem automaticamente o valor e naipe necessários
-                    para formar a maior combinação possível na coluna onde forem jogadas.</li>
-            </ul>
-            <h3>2. Fluxo da Partida</h3>
-            <ul>
-                <li>Cada jogador começa com <b>5 cartas na mão</b>.</li>
-                <li>A cada turno, o jogador deve baixar <b>1 carta</b> em qualquer uma das suas 5 colunas.</li>
-                <li>Imediatamente após jogar, o jogador compra uma nova carta do deck.</li>
-                <li>O turno passa para o oponente.</li>
-            </ul>
-            <h3>3. A Coluna Zero (Estratégia)</h3>
-            <p>A primeira coluna (Coluna 0) é especial:</p>
-            <ul>
-                <li>As cartas jogadas ali ficam <b>viradas para baixo (ocultas)</b> para o oponente.</li>
-                <li>Elas só são reveladas quando ambos os jogadores completarem 3 cartas nessa coluna ou quando o jogo
-                    terminar.</li>
-            </ul>
-            <h3>4. Como Vencer uma Coluna</h3>
-            <p>Uma coluna é disputada quando ambos os jogadores colocam 3 cartas nela. A hierarquia de forças (da maior
-                para a menor) é:</p>
-            <ol>
-                <li><b>Trinca de Ás:</b> Três cartas "A".</li>
-                <li><b>Straight Flush:</b> Sequência de 3 cartas do mesmo naipe.</li>
-                <li><b>Trinca:</b> Três cartas do mesmo valor.</li>
-                <li><b>Flush:</b> Três cartas do mesmo naipe, sem sequência.</li>
-                <li><b>Sequência (Straight):</b> Três cartas em ordem numérica.</li>
-                <li><b>Par:</b> Duas cartas do mesmo valor.</li>
-                <li><b>Carta Alta:</b> Soma dos valores das 3 cartas.</li>
-            </ol>
-            <button class="lobby-btn lobby-btn-create" style="margin-top: 20px;"
-                id="btn-entendi-regras">ENTENDI!</button>
+            <h2 style="color: var(--accent); border-bottom: 4px solid var(--accent); text-align:center; font-size: 16px; margin-bottom: 25px;">
+                📖 LIVRO DE REGRAS: THREE OF A KIND
+            </h2>
+
+            <div class="rules-row">
+                <div class="rules-text">
+                    <h3>1. O OBJETIVO</h3>
+                    <p>Vença a disputa em <b>3 das 5 colunas</b> da mesa. Cada coluna é um mini-duelo onde você deve formar a melhor Trinca (mão de 3 cartas).</p>
+                </div>
+                <div class="rules-img-stack">
+                    <img src="assets/cards/ace_hearts.png" class="rules-card-img" style="transform: rotate(-5deg)">
+                    <img src="assets/cards/ace_spades.png" class="rules-card-img" style="transform: rotate(5deg); margin-left: -40px;">
+                </div>
+            </div>
+
+            <div class="rules-row">
+                <div class="rules-text">
+                    <h3>2. A COLUNA ZERO (ESTRATÉGIA)</h3>
+                    <p>A primeira coluna é secreta. As cartas jogadas aqui ficam <b>viradas para baixo</b> e só são reveladas no final. É o lugar perfeito para blefar ou esconder sua jogada mestre.</p>
+                </div>
+                <div class="rules-img-stack">
+                    <img src="assets/cards/back_card.png" class="rules-card-img">
+                </div>
+            </div>
+
+            <div class="rules-row">
+                <div class="rules-text">
+                    <h3>3. CORINGAS (WILD CARDS)</h3>
+                    <p>O <b>Coringa (JK)</b> é a carta mais poderosa. Ela assume automaticamente o valor e naipe necessários para completar o <b>maior combo possível</b> naquela coluna.</p>
+                </div>
+                <div class="rules-img-stack">
+                    <img src="assets/cards/joker_1.png" class="rules-card-img">
+                </div>
+            </div>
+
+            <div class="rules-row">
+                <div class="rules-text">
+                    <h3>4. FLUXO DO JOGO</h3>
+                    <ul>
+                        <li>Você começa com <b>5 cartas</b>.</li>
+                        <li>Jogue 1 carta por turno e <b>compre outra</b> imediatamente.</li>
+                        <li>Organize sua mão livremente para planejar seus próximos movimentos.</li>
+                    </ul>
+                </div>
+                <div class="rules-img-stack" style="flex-direction: column; align-items: center; gap: 0;">
+                    <div style="display: flex;">
+                        <img src="assets/cards/10_diamonds.png" class="rules-card-img" style="width: 40px; height: 60px;">
+                        <img src="assets/cards/jack_diamonds.png" class="rules-card-img" style="width: 40px; height: 60px; margin-left: -15px;">
+                        <img src="assets/cards/queen_diamonds.png" class="rules-card-img" style="width: 40px; height: 60px; margin-left: -15px;">
+                    </div>
+                    <span style="font-size: 10px; color: var(--win); margin-top: 5px;">STR. FLUSH!</span>
+                </div>
+            </div>
+
+            <h3 style="text-align: center; color: var(--accent); margin-top: 30px;">VALOR DAS CARTAS</h3>
+            <p style="font-size: 11px; text-align: center; margin-bottom: 20px;">
+                A sequência de força é: <b>A (14)</b> > K (13) > Q (12) > J (11) > 10 > ... > 2.
+            </p>
+
+            <h3 style="text-align: center; color: var(--accent);">HIERARQUIA DE COMBOS</h3>
+            <div style="display: flex; flex-direction: column; gap: 10px; font-size: 11px; background: rgba(0,0,0,0.3); padding: 15px; border: 2px solid #333;">
+                <div style="border-bottom: 1px solid #444; padding-bottom: 5px;">
+                    <b style="color: var(--win);">1. TRINCA DE ÁS (A-A-A):</b> A mão imbatível. Três cartas Ás na mesma coluna.
+                </div>
+                <div style="border-bottom: 1px solid #444; padding-bottom: 5px;">
+                    <b style="color: var(--win);">2. STRAIGHT FLUSH:</b> Três cartas em sequência (ex: 7-8-9) E todas do <b>mesmo naipe</b>.
+                </div>
+                <div style="border-bottom: 1px solid #444; padding-bottom: 5px;">
+                    <b style="color: var(--win);">3. TRINCA:</b> Três cartas com o <b>mesmo valor</b> (ex: 8-8-8), mas naipes diferentes.
+                </div>
+                <div style="border-bottom: 1px solid #444; padding-bottom: 5px;">
+                    <b style="color: var(--win);">4. FLUSH:</b> Três cartas quaisquer, desde que todas sejam do <b>mesmo naipe</b> (ex: 2, 5 e K de Copas).
+                </div>
+                <div style="border-bottom: 1px solid #444; padding-bottom: 5px;">
+                    <b style="color: var(--win);">5. SEQUÊNCIA (STRAIGHT):</b> Três cartas em ordem numérica (ex: 4-5-6), mas de <b>naipes diferentes</b>.
+                </div>
+                <div style="border-bottom: 1px solid #444; padding-bottom: 5px;">
+                    <b style="color: var(--win);">6. PAR:</b> Duas cartas com o mesmo valor (ex: 10-10-4).
+                </div>
+                <div style="padding-bottom: 5px;">
+                    <b style="color: #888;">7. CARTA ALTA:</b> Se ninguém fizer nenhum combo acima, vence quem tiver a <b>maior soma</b> de valores das 3 cartas.
+                </div>
+            </div>
+
+            <div style="margin-top: 20px; font-size: 10px; color: #ccc; border: 1px dashed var(--accent); padding: 10px;">
+                <b>DICA DE EMPATE:</b> Se dois jogadores fizerem o MESMO combo (ex: ambos com Par), vence quem completou as 3 cartas na coluna <b>primeiro</b>!
+            </div>
+
+            <button class="lobby-btn lobby-btn-create" style="margin-top: 30px;" id="btn-entendi-regras">VAMOS JOGAR!</button>
         </div>
     </div>
 
@@ -978,6 +1107,11 @@
             <div style="margin-top: 25px;">
                 <label for="bg-scale" style="font-size: 10px; color: #fff; font-family: 'Press Start 2P'; display: block; margin-bottom: 15px;">ZOOM DO FUNDO: <span id="bg-scale-val">100%</span></label>
                 <input type="range" id="bg-scale" min="1" max="2" step="0.05" value="1" style="width: 100%; accent-color: var(--accent); cursor: pointer;">
+            </div>
+
+            <div style="margin-top: 25px;">
+                <label for="ui-scale" style="font-size: 10px; color: #fff; font-family: 'Press Start 2P'; display: block; margin-bottom: 15px;">ZOOM DA INTERFACE: <span id="ui-scale-val">100%</span></label>
+                <input type="range" id="ui-scale" min="0.5" max="1.5" step="0.05" value="1" style="width: 100%; accent-color: var(--accent); cursor: pointer;">
             </div>
             
             <button class="lobby-btn" style="background: #a0aec0; color: #000; margin-top: 30px;" id="btn-fechar-config-ok">FECHAR</button>
@@ -1243,6 +1377,9 @@
         const bgScaleValDisplay = document.getElementById('bg-scale-val');
         const bgLayer = document.getElementById('bg-layer');
 
+        const uiScaleInput = document.getElementById('ui-scale');
+        const uiScaleValDisplay = document.getElementById('ui-scale-val');
+
         boardScaleInput.oninput = () => {
             const val = boardScaleInput.value;
             scaleValDisplay.innerText = Math.round(val * 100) + '%';
@@ -1262,11 +1399,54 @@
             bgLayer.style.transform = `scale(${val})`;
         };
 
+        uiScaleInput.oninput = () => {
+            const val = uiScaleInput.value;
+            uiScaleValDisplay.innerText = Math.round(val * 100) + '%';
+            
+            const uiElements = [
+                document.querySelector('.global-wins'),
+                document.querySelector('.room-info-box'),
+                document.querySelector('.top-bar'),
+                document.querySelector('.volume-controls'),
+                document.getElementById('btn-regras-game'),
+                document.getElementById('btn-combos-game'),
+                document.getElementById('btn-config-game')
+            ];
+            
+            uiElements.forEach(el => {
+                if (el) {
+                    el.style.transform = `scale(${val})`;
+                    // Ajustamos a origem para não "fugir" da tela
+                    if (el.classList.contains('global-wins')) el.style.transformOrigin = "top right";
+                    else if (el.classList.contains('room-info-box')) el.style.transformOrigin = "top left";
+                    else if (el.classList.contains('volume-controls')) el.style.transformOrigin = "bottom left";
+                    else if (el.id?.includes('btn-')) el.style.transformOrigin = "bottom right";
+                    else el.style.transformOrigin = "center top";
+                }
+            });
+        };
+
         window.onclick = (e) => {
             if (e.target == modalRegras) fecharRegras();
             if (e.target == modalCombos) fecharCombos();
             if (e.target == modalConfig) fecharConfig();
         };
+
+        function applyMobileDefaults() {
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 1200;
+            if (isMobile) {
+                if (boardScaleInput) boardScaleInput.value = 0.4;
+                if (handScaleInput) handScaleInput.value = 0.5;
+                if (bgScaleInput) bgScaleInput.value = 1;
+                if (uiScaleInput) uiScaleInput.value = 0.5;
+                
+                // Dispara os eventos de atualização
+                if (boardScaleInput) boardScaleInput.oninput();
+                if (handScaleInput) handScaleInput.oninput();
+                if (bgScaleInput) bgScaleInput.oninput();
+                if (uiScaleInput) uiScaleInput.oninput();
+            }
+        }
 
         let gameRef = null, myID = null, oppID = null, currentRoomCode = null;
         let playerHand = [], selectedIdx = null, isMyTurn = false, bothOnline = false;
@@ -1345,6 +1525,7 @@
         };
 
         function setupGame() {
+            document.body.classList.add('force-landscape'); // Ativa o aviso de girar tela
             onValue(gameRef, async (snapshot) => {
                 const data = snapshot.val();
                 if (!data) return;
@@ -1468,15 +1649,24 @@
                     d.classList.remove('new-card-anim');
 
                     // Criamos o clone que segue o mouse
+                    const rectOriginal = d.getBoundingClientRect();
                     const dragClone = d.cloneNode(true);
                     dragClone.classList.remove('ghost', 'selected', 'new-card-anim');
                     dragClone.style.position = 'fixed';
                     dragClone.style.zIndex = '99999';
                     dragClone.style.margin = '0';
+                    dragClone.style.width = rectOriginal.width + 'px';
+                    dragClone.style.height = rectOriginal.height + 'px';
                     dragClone.style.pointerEvents = 'none';
                     dragClone.style.transformOrigin = 'center center';
-                    dragClone.style.transform = 'translate(-50%, -50%) scale(0.9) rotate(0deg)';
-                    dragClone.style.opacity = '1'; // Clone sempre visível
+                    
+                    const isMobile = window.innerWidth <= 1200;
+                    // No mobile, diminuímos a escala e subimos a carta levemente para não ficar totalmente sob o dedo
+                    const scaleVal = isMobile ? '0.8' : '1.1';
+                    const offsetY = isMobile ? -40 : 0;
+                    
+                    dragClone.style.transform = `translate(-50%, calc(-50% + ${offsetY}px)) scale(${scaleVal}) rotate(0deg)`;
+                    dragClone.style.opacity = '1';
                     dragClone.style.left = e.clientX + 'px';
                     dragClone.style.top = e.clientY + 'px';
                     document.body.appendChild(dragClone);
@@ -1501,7 +1691,11 @@
                         
                         const boardRow = document.getElementById('play-row');
                         const rowRect = boardRow.getBoundingClientRect();
-                        const isNearBoard = ev.clientY >= rowRect.top - 150 && ev.clientY <= rowRect.bottom + 150;
+                        const handArea = document.getElementById('hand-area');
+                        const handRect = handArea.getBoundingClientRect();
+                        
+                        // Consideramos "perto do board" apenas se estiver acima da área da mão com uma pequena margem
+                        const isNearBoard = ev.clientY < handRect.top - 20;
 
                         let slot = null;
                         if (isMyTurn) {
@@ -1580,9 +1774,11 @@
                                     handContainer.insertBefore(placeholder, siblings[targetIdx]);
                                 }
                                 
-                                // Ajusta margens
+                                // Ajusta margens dinamicamente (mobile vs desktop)
+                                const isMobile = window.innerWidth <= 1200;
+                                const marginVal = isMobile ? "-60px" : "-90px";
                                 Array.from(handContainer.children).filter(c => c.style.display !== 'none').forEach((c, idx) => {
-                                    c.style.marginLeft = idx === 0 ? "0" : "-90px";
+                                    c.style.marginLeft = idx === 0 ? "0" : marginVal;
                                 });
                             } else {
                                 handContainer.classList.add('hide-others');
@@ -1861,6 +2057,7 @@
             document.getElementById('game-container').style.display = 'block';
             document.getElementById('player-id-display').innerText = myID.toUpperCase();
             document.getElementById('room-code-header').innerText = currentRoomCode;
+            applyMobileDefaults();
             setupGame();
             const gList = document.getElementById('combo-list');
             if (gList.children.length === 0) {
@@ -1877,6 +2074,7 @@
                 });
             }
         }
+        setTimeout(applyMobileDefaults, 100);
     </script>
 </body>
 
