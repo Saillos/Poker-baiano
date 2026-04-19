@@ -18,8 +18,7 @@
         }
 
         body {
-            background: url('assets/tavern_bg.jpg') no-repeat center center fixed;
-            background-size: cover;
+            background: #000;
             color: #ececec;
             font-family: 'VT323', monospace;
             display: flex;
@@ -31,7 +30,18 @@
             user-select: none;
             -webkit-user-select: none;
             image-rendering: auto;
-            /* Allow the high-res bg to be smooth */
+        }
+
+        #bg-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('assets/tavern_bg.jpg') no-repeat center center;
+            background-size: cover;
+            z-index: -1;
+            transition: transform 0.1s;
         }
 
         h1,
@@ -142,6 +152,28 @@
             color: var(--win);
             display: block;
             margin-top: 2px;
+        }
+
+        .room-info-box {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 10px 15px;
+            border: 2px solid var(--accent);
+            font-size: 14px;
+            z-index: 1000;
+            text-align: center;
+            box-shadow: 4px 4px 0px #000;
+            font-family: 'Press Start 2P', cursive;
+        }
+
+        .room-info-box span {
+            font-size: 20px;
+            color: var(--win);
+            display: block;
+            margin-top: 5px;
+            letter-spacing: 2px;
         }
 
         .top-bar {
@@ -357,21 +389,25 @@
         }
 
         .dot {
-            width: 22px;
-            height: 22px;
-            background: #222;
-            border: 3px solid #000;
+            width: 30px;
+            height: 30px;
+            background: transparent;
+            border: none;
             display: flex;
             align-items: center;
             justify-content: center;
             transition: 0.3s;
-            box-shadow: inset 2px 2px 5px #000;
+            font-size: 24px;
+            filter: grayscale(1) opacity(0.4);
+        }
+
+        .dot::after {
+            content: '👑';
         }
 
         .dot.active {
-            background: var(--accent);
-            box-shadow: 0 0 10px var(--accent);
-            border-color: #fff;
+            filter: drop-shadow(0px 0px 8px var(--accent));
+            transform: scale(1.3);
         }
 
         .card-body {
@@ -426,8 +462,8 @@
         }
 
         .joker-card {
-            background: #f4d03f !important;
-            border-color: #b8860b !important;
+            background: transparent !important;
+            border-color: transparent !important;
         }
 
         .card-img-wrapper {
@@ -458,6 +494,29 @@
             box-shadow: -2px 2px 0px #000;
         }
 
+        .btn-config-game {
+            position: fixed;
+            bottom: 20px;
+            right: 140px;
+            width: 50px;
+            height: 50px;
+            background: #4a5568;
+            color: white;
+            border: 4px solid #000;
+            font-size: 20px;
+            cursor: pointer;
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: -4px 4px 0px #000, inset 4px 4px 0px #718096;
+        }
+
+        .btn-config-game:active {
+            transform: translateY(2px);
+            box-shadow: -2px 2px 0px #000;
+        }
+
         /* COMBO LABEL - fixed overlay above the 3D board */
         .combo-label {
             position: fixed;
@@ -470,7 +529,7 @@
             font-size: 18px;
             font-weight: bold;
             text-transform: uppercase;
-            z-index: 99999;
+            z-index: 500;
             opacity: 0;
             pointer-events: none;
             animation: bannerUnfurl 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
@@ -521,6 +580,18 @@
             pointer-events: none;
         }
 
+        #hand.hide-all .hand-card {
+            transform: translateY(400px) !important;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #hand.hide-others .hand-card:not(.dragging) {
+            transform: translateY(400px) !important;
+            opacity: 0;
+            pointer-events: none;
+        }
+
         #hand {
             display: flex;
             min-height: 250px;
@@ -542,6 +613,7 @@
             pointer-events: auto !important;
             transform-origin: bottom center;
             transform: translateY(var(--fan-y, 0px)) rotate(var(--fan-rotate, 0deg));
+            touch-action: none;
         }
 
         .hand-card:hover {
@@ -576,6 +648,26 @@
             z-index: 100 !important;
             border-color: var(--accent) !important;
             box-shadow: 0 0 0 4px #fff, 0 0 20px var(--accent);
+        }
+
+        .hand-card.ghost {
+            opacity: 0.4;
+            filter: grayscale(0.5);
+            pointer-events: none;
+        }
+
+        .slot.drag-over {
+            background: rgba(244, 208, 63, 0.3) !important;
+            border-color: var(--accent) !important;
+            box-shadow: inset 0 0 30px var(--accent) !important;
+        }
+
+        .preview-card {
+            opacity: 0.5;
+            pointer-events: none;
+            position: absolute;
+            z-index: 5;
+            filter: brightness(1.2);
         }
 
         /* OVERLAYS */
@@ -718,6 +810,19 @@
             align-items: center;
         }
 
+        #modal-config {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+
         .combo-grid {
             display: flex;
             gap: 30px;
@@ -750,10 +855,44 @@
             text-transform: uppercase;
             font-weight: bold;
         }
+
+        #landscape-warning {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+            color: #fff;
+            z-index: 999999;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            font-family: 'Press Start 2P', cursive;
+        }
+
+        @keyframes rotatePhone {
+            0% { transform: rotate(0deg); }
+            50% { transform: rotate(-90deg); }
+            100% { transform: rotate(-90deg); }
+        }
+
+        @media screen and (max-width: 1024px) and (orientation: portrait) {
+            #landscape-warning { display: flex; }
+            #game-container, #lobby-overlay, .global-wins, .room-info-box { display: none !important; }
+        }
     </style>
 </head>
 
 <body>
+    <div id="bg-layer"></div>
+    <div id="landscape-warning">
+        <div style="font-size: 50px; margin-bottom: 20px; animation: rotatePhone 2s infinite ease-in-out;">📱</div>
+        <h2 style="font-size: 16px; color: var(--accent); margin-bottom: 15px;">MODO PAISAGEM</h2>
+        <p style="font-size: 10px; line-height: 1.5; padding: 0 20px;">Por favor, vire o seu celular na horizontal para jogar o Bettle Trinca.</p>
+    </div>
 
     <audio id="snd-match" src="sonds/effect/effect_01.mp3" preload="auto"></audio>
     <audio id="snd-drop1" src="sonds/effect/effect_02.mp3" preload="auto"></audio>
@@ -819,6 +958,31 @@
         </div>
     </div>
 
+    <!-- MODAL CONFIGURAÇÃO -->
+    <div id="modal-config">
+        <div class="modal-content" style="max-width: 500px; text-align: center;">
+            <span class="close-modal" id="btn-fechar-config">&times;</span>
+            <h2 style="color: #a0aec0; border-bottom: 4px solid #a0aec0; font-size: 14px;">⚙️ CONFIGURAÇÕES</h2>
+            
+            <div style="margin-top: 30px;">
+                <label for="board-scale" style="font-size: 10px; color: #fff; font-family: 'Press Start 2P'; display: block; margin-bottom: 15px;">ZOOM DA MESA: <span id="scale-val">100%</span></label>
+                <input type="range" id="board-scale" min="0.4" max="1.5" step="0.05" value="1" style="width: 100%; accent-color: var(--accent); cursor: pointer;">
+            </div>
+
+            <div style="margin-top: 25px;">
+                <label for="hand-scale" style="font-size: 10px; color: #fff; font-family: 'Press Start 2P'; display: block; margin-bottom: 15px;">ZOOM DA MÃO: <span id="hand-scale-val">100%</span></label>
+                <input type="range" id="hand-scale" min="0.5" max="1.5" step="0.05" value="1" style="width: 100%; accent-color: var(--accent); cursor: pointer;">
+            </div>
+
+            <div style="margin-top: 25px;">
+                <label for="bg-scale" style="font-size: 10px; color: #fff; font-family: 'Press Start 2P'; display: block; margin-bottom: 15px;">ZOOM DO FUNDO: <span id="bg-scale-val">100%</span></label>
+                <input type="range" id="bg-scale" min="1" max="2" step="0.05" value="1" style="width: 100%; accent-color: var(--accent); cursor: pointer;">
+            </div>
+            
+            <button class="lobby-btn" style="background: #a0aec0; color: #000; margin-top: 30px;" id="btn-fechar-config-ok">FECHAR</button>
+        </div>
+    </div>
+
     <div id="disconnect-overlay">
         <h1 style="color: var(--loss); font-size: 3em;">OPONENTE SAIU</h1>
         <p style="font-size: 1.2em; opacity: 0.8;">A conexão com o outro jogador foi perdida.</p>
@@ -843,6 +1007,7 @@
     <div id="game-container" style="display:none;">
         <button class="btn-regras-game" id="btn-regras-game">?</button>
         <button class="btn-combos-game" id="btn-combos-game">🏆</button>
+        <button class="btn-config-game" id="btn-config-game">⚙️</button>
 
         <div class="volume-controls"
             style="background:rgba(0,0,0,0.8); border:4px solid #333; padding:15px; box-shadow: 4px 4px 0px #000;">
@@ -875,8 +1040,12 @@
             </div>
         </div>
 
-        <div style="position:absolute; top:20px; left:20px; color:#64748b;">Sala: <span id="room-code-header"
-                style="color:var(--win); font-weight:bold;">---</span></div>
+        <div class="room-info-box">
+            <div style="font-size: 10px; margin-bottom: 10px; color: #ccc;">CÓDIGO DA SALA</div>
+            <span id="room-code-header">---</span>
+            <button class="btn-ui" style="margin-top: 15px; width: 100%; padding: 10px; font-size: 8px;"
+                onclick="window.toggleFullScreen()">TELA CHEIA</button>
+        </div>
 
         <div class="global-wins">
             <div style="font-size: 10px; margin-bottom: 10px; font-family:'Press Start 2P'">ID: <b
@@ -940,9 +1109,12 @@
                 justify-content: flex-end;
             ">
                 <!-- Stacked card backs -->
-                <div class="card-body card-back" style="width: 180px; height: 270px; position: absolute; top: -9px; left: 9px; z-index: 1;"></div>
-                <div class="card-body card-back" style="width: 180px; height: 270px; position: absolute; top: -4px; left: 4px; z-index: 2;"></div>
-                <div class="card-body card-back" style="width: 180px; height: 270px; position: absolute; top: 0; left: 0; z-index: 3;"></div>
+                <div class="card-body card-back" style="width: 180px; height: 270px; position: absolute; top: 0px; left: 0px; z-index: 1; box-shadow: -10px 15px 25px rgba(0,0,0,0.9); transform: rotate(3deg);"></div>
+                <div class="card-body card-back" style="width: 180px; height: 270px; position: absolute; top: -3px; left: 0px; z-index: 2; transform: rotate(-2deg);"></div>
+                <div class="card-body card-back" style="width: 180px; height: 270px; position: absolute; top: -6px; left: 0px; z-index: 3; transform: rotate(1deg);"></div>
+                <div class="card-body card-back" style="width: 180px; height: 270px; position: absolute; top: -9px; left: 0px; z-index: 4; transform: rotate(-1deg);"></div>
+                <div class="card-body card-back" style="width: 180px; height: 270px; position: absolute; top: -12px; left: 0px; z-index: 5; transform: rotate(0.5deg);"></div>
+                <div class="card-body card-back" style="width: 180px; height: 270px; position: absolute; top: -15px; left: 0px; z-index: 6; transform: rotate(0deg); box-shadow: -2px 2px 8px rgba(0,0,0,0.5);"></div>
                 <!-- Count BELOW the deck -->
                 <div style="position: absolute; bottom: -55px; text-align: center; z-index: 10;">
                     <div id="count" style="font-size: 28px; font-weight: bold; color: var(--accent); font-family: 'Press Start 2P';">--</div>
@@ -1003,10 +1175,50 @@
         // MODAL LOGIC
         const modalRegras = document.getElementById('modal-regras');
         const modalCombos = document.getElementById('modal-combos');
+        const modalConfig = document.getElementById('modal-config');
+        
         const abrirRegras = () => modalRegras.style.display = 'flex';
         const fecharRegras = () => modalRegras.style.display = 'none';
         const abrirCombos = () => modalCombos.style.display = 'flex';
         const fecharCombos = () => modalCombos.style.display = 'none';
+        const abrirConfig = () => modalConfig.style.display = 'flex';
+        const fecharConfig = () => modalConfig.style.display = 'none';
+
+        const handContainer = document.getElementById('hand');
+        
+        let startY = 0;
+        document.addEventListener('touchstart', (e) => {
+            if (e.target.closest('.hand-card') || e.target.closest('.slot') || e.target.closest('button') || e.target.closest('input')) return;
+            startY = e.touches[0].clientY;
+        });
+        document.addEventListener('touchend', (e) => {
+            if (e.target.closest('.hand-card') || e.target.closest('.slot') || e.target.closest('button') || e.target.closest('input')) return;
+            let endY = e.changedTouches[0].clientY;
+            let diff = endY - startY;
+            if (diff > 50) {
+                handContainer.classList.add('hide-all');
+            } else if (diff < -50) {
+                handContainer.classList.remove('hide-all');
+            }
+        });
+        
+        let isMouseDownGlobal = false;
+        document.addEventListener('mousedown', (e) => {
+            if (e.target.closest('.hand-card') || e.target.closest('.slot') || e.target.closest('button') || e.target.closest('input')) return;
+            isMouseDownGlobal = true;
+            startY = e.clientY;
+        });
+        document.addEventListener('mouseup', (e) => {
+            if (!isMouseDownGlobal) return;
+            isMouseDownGlobal = false;
+            let endY = e.clientY;
+            let diff = endY - startY;
+            if (diff > 50) {
+                handContainer.classList.add('hide-all');
+            } else if (diff < -50) {
+                handContainer.classList.remove('hide-all');
+            }
+        });
 
         document.getElementById('btn-regras-lobby').onclick = abrirRegras;
         document.getElementById('btn-regras-game').onclick = abrirRegras;
@@ -1014,9 +1226,45 @@
         document.getElementById('btn-entendi-regras').onclick = fecharRegras;
         document.getElementById('btn-combos-game').onclick = abrirCombos;
         document.getElementById('btn-fechar-combos').onclick = fecharCombos;
+        document.getElementById('btn-config-game').onclick = abrirConfig;
+        document.getElementById('btn-fechar-config').onclick = fecharConfig;
+        document.getElementById('btn-fechar-config-ok').onclick = fecharConfig;
+
+        const boardScaleInput = document.getElementById('board-scale');
+        const scaleValDisplay = document.getElementById('scale-val');
+        const boardWrapper = document.getElementById('board-wrapper');
+
+        const handScaleInput = document.getElementById('hand-scale');
+        const handScaleValDisplay = document.getElementById('hand-scale-val');
+        const handArea = document.getElementById('hand-area');
+
+        const bgScaleInput = document.getElementById('bg-scale');
+        const bgScaleValDisplay = document.getElementById('bg-scale-val');
+        const bgLayer = document.getElementById('bg-layer');
+
+        boardScaleInput.oninput = () => {
+            const val = boardScaleInput.value;
+            scaleValDisplay.innerText = Math.round(val * 100) + '%';
+            boardWrapper.style.transform = `scale(${val}) rotateX(28deg) translateY(-280px)`;
+        };
+
+        handScaleInput.oninput = () => {
+            const val = handScaleInput.value;
+            handScaleValDisplay.innerText = Math.round(val * 100) + '%';
+            handArea.style.transform = `scale(${val})`;
+            handArea.style.transformOrigin = "bottom center";
+        };
+
+        bgScaleInput.oninput = () => {
+            const val = bgScaleInput.value;
+            bgScaleValDisplay.innerText = Math.round(val * 100) + '%';
+            bgLayer.style.transform = `scale(${val})`;
+        };
+
         window.onclick = (e) => {
             if (e.target == modalRegras) fecharRegras();
             if (e.target == modalCombos) fecharCombos();
+            if (e.target == modalConfig) fecharConfig();
         };
 
         let gameRef = null, myID = null, oppID = null, currentRoomCode = null;
@@ -1024,6 +1272,7 @@
         let lastTurnLocal = null, lastMoveTimeLocal = 0, lastHandSize = 0;
         let isInitialDeal = false, gameAlreadyFinished = false;
         let currentTrackLocal = null;
+        let isDraggingLocal = false;
 
         const bgMusic = document.getElementById('bg-music');
         const volBgInput = document.getElementById('vol-bg');
@@ -1051,6 +1300,7 @@
             lastHandSize = 0;
             isInitialDeal = true;
             document.querySelectorAll('.slot').forEach(s => { s.innerHTML = ''; s.style.boxShadow = 'none'; });
+            document.querySelectorAll('.combo-label').forEach(el => el.remove());
             document.getElementById('end-game-overlay').style.display = 'none';
             document.getElementById('reset-request-overlay').style.display = 'none';
         }
@@ -1066,37 +1316,34 @@
             location.reload();
         };
 
+        window.playCardOnSlot = async (col, handIndex) => {
+            if (!isMyTurn || !bothOnline) return;
+            const snap = await get(gameRef);
+            const data = snap.val();
+            let cardsInSlot = (data.board?.[myID]?.[`col${col}`]) || [];
+            if (cardsInSlot.length < 3) {
+                let mao = [...data.maos[myID]];
+                let deck = data.deck || [];
+                const card = mao.splice(handIndex, 1)[0];
+                cardsInSlot.push(card);
+                if (deck.length > 0) mao.push(deck.shift());
+                const up = {};
+                up[`board/${myID}/col${col}`] = cardsInSlot;
+                up[`maos/${myID}`] = mao;
+                up[`deck`] = deck;
+                up[`deckCount`] = deck.length;
+                up[`turn`] = oppID;
+                up[`lastMove`] = { player: myID, time: Date.now() };
+                if (cardsInSlot.length === 3) up[`times/${myID}/col${col}`] = Date.now();
+
+                selectedIdx = null;
+                updateHandUI();
+
+                await update(gameRef, up);
+            }
+        };
+
         function setupGame() {
-            document.getElementById('play-row').onclick = async (e) => {
-                const slot = e.target.closest('.slot');
-                if (!slot || !isMyTurn || selectedIdx === null || !bothOnline) return;
-                const col = slot.getAttribute('data-col');
-                const snap = await get(gameRef);
-                const data = snap.val();
-                let cardsInSlot = (data.board?.[myID]?.[`col${col}`]) || [];
-                if (cardsInSlot.length < 3) {
-                    let mao = [...data.maos[myID]];
-                    let deck = data.deck || [];
-                    const card = mao.splice(selectedIdx, 1)[0];
-                    cardsInSlot.push(card);
-                    if (deck.length > 0) mao.push(deck.shift());
-                    const up = {};
-                    up[`board/${myID}/col${col}`] = cardsInSlot;
-                    up[`maos/${myID}`] = mao;
-                    up[`deck`] = deck;
-                    up[`deckCount`] = deck.length;
-                    up[`turn`] = oppID;
-                    up[`lastMove`] = { player: myID, time: Date.now() };
-                    if (cardsInSlot.length === 3) up[`times/${myID}/col${col}`] = Date.now();
-
-                    // Limpa a seleção local imediatamente para feedback instantâneo
-                    selectedIdx = null;
-                    updateHandUI();
-
-                    await update(gameRef, up);
-                }
-            };
-
             onValue(gameRef, async (snapshot) => {
                 const data = snapshot.val();
                 if (!data) return;
@@ -1175,13 +1422,14 @@
         }
 
         function updateHandUI() {
+            if (isDraggingLocal) return;
             const h = document.getElementById('hand');
             if (playerHand.length === 0) { h.innerHTML = ''; return; }
             h.innerHTML = '';
             const total = playerHand.length;
             playerHand.forEach((c, i) => {
                 const d = document.createElement('div');
-                let isImg = ((c.s === '♥' || c.s === '♦' || c.s === '♠') && c.type !== 'joker');
+                let isImg = (c.s === '♥' || c.s === '♦' || c.s === '♠' || c.s === '♣' || c.type === 'joker');
                 d.className = `card-body hand-card ${c.color} ${selectedIdx === i ? 'selected' : ''} ${c.type === 'joker' ? 'joker-card' : ''} ${isImg ? 'card-img-wrapper' : ''}`;
                 if (isInitialDeal || i >= lastHandSize) {
                     d.classList.add('new-card-anim');
@@ -1200,9 +1448,205 @@
                 d.style.setProperty('--fan-rotate', `${angle}deg`);
                 d.style.setProperty('--fan-y', `${translateY}px`);
                 d.style.zIndex = i + 1;
+                d.setAttribute('data-original-idx', i);
 
                 d.innerHTML = getCardInner(c.v, c.s, c.type, c.jId);
-                d.onclick = () => { if (isMyTurn && bothOnline) { if (selectedIdx !== i) playSnd('snd-select'); selectedIdx = (selectedIdx === i ? null : i); updateHandUI(); } };
+
+                // DRAG AND DROP LOGIC
+                d.onpointerdown = (e) => {
+                    if (!bothOnline) return; 
+                    isDraggingLocal = true;
+                    e.preventDefault();
+                    playSnd('snd-select');
+                    
+                    const handContainer = document.getElementById('hand');
+                    
+                    // O card original fica escondido
+                    d.style.opacity = '0';
+                    d.classList.add('dragging'); 
+                    d.classList.remove('new-card-anim');
+
+                    // Criamos o clone que segue o mouse
+                    const dragClone = d.cloneNode(true);
+                    dragClone.classList.remove('ghost', 'selected', 'new-card-anim');
+                    dragClone.style.position = 'fixed';
+                    dragClone.style.zIndex = '99999';
+                    dragClone.style.margin = '0';
+                    dragClone.style.pointerEvents = 'none';
+                    dragClone.style.transformOrigin = 'center center';
+                    dragClone.style.transform = 'translate(-50%, -50%) scale(0.9) rotate(0deg)';
+                    dragClone.style.opacity = '1'; // Clone sempre visível
+                    dragClone.style.left = e.clientX + 'px';
+                    dragClone.style.top = e.clientY + 'px';
+                    document.body.appendChild(dragClone);
+
+                    // Criamos um placeholder transparente para mostrar onde a carta vai cair na mão
+                    const placeholder = d.cloneNode(true);
+                    placeholder.classList.add('ghost');
+                    placeholder.classList.remove('dragging', 'new-card-anim');
+                    placeholder.style.opacity = '0'; // Deixamos invisível para criar apenas o "buraco"
+                    placeholder.style.pointerEvents = 'none';
+                    // Inserimos o placeholder logo após o original inicialmente
+                    d.parentNode.insertBefore(placeholder, d.nextSibling);
+                    d.style.display = 'none'; // Esconde o original do layout para não ocupar espaço duplicado
+
+                    let lastSlot = null;
+                    let previewCard = null;
+
+                    const onPointerMove = (ev) => {
+                        if (!dragClone) return;
+                        dragClone.style.left = ev.clientX + 'px';
+                        dragClone.style.top = ev.clientY + 'px';
+                        
+                        const boardRow = document.getElementById('play-row');
+                        const rowRect = boardRow.getBoundingClientRect();
+                        const isNearBoard = ev.clientY >= rowRect.top - 150 && ev.clientY <= rowRect.bottom + 150;
+
+                        let slot = null;
+                        if (isMyTurn) {
+                            const slots = boardRow.querySelectorAll('.slot');
+                            for (const s of slots) {
+                                const rect = s.getBoundingClientRect();
+                                if (ev.clientX >= rect.left && ev.clientX <= rect.right && 
+                                    ev.clientY >= rect.top && ev.clientY <= rect.bottom) {
+                                    slot = s;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        if (slot) {
+                            const currentCards = slot.querySelectorAll('.card-body:not(.preview-card)').length;
+                            if (currentCards < 3) {
+                                if (lastSlot !== slot) {
+                                    if (previewCard) previewCard.remove();
+                                    if (lastSlot) lastSlot.classList.remove('drag-over');
+                                    
+                                    lastSlot = slot;
+                                    slot.classList.add('drag-over');
+                                    
+                                    previewCard = d.cloneNode(true);
+                                    const col = slot.getAttribute('data-col');
+                                    previewCard.classList.remove('ghost', 'dragging', 'selected', 'new-card-anim', 'hand-card');
+                                    previewCard.classList.add('preview-card');
+                                    previewCard.style.opacity = '0.5';
+
+                                    if (col === '0') {
+                                        previewCard.classList.add('card-back');
+                                        previewCard.innerHTML = '';
+                                    }
+
+                                    previewCard.style.top = (currentCards * 60) + 'px';
+                                    previewCard.style.left = '10px';
+                                    previewCard.style.position = 'absolute';
+                                    previewCard.style.transform = 'none';
+                                    previewCard.style.margin = '0';
+                                    previewCard.style.width = '200px';
+                                    previewCard.style.height = '290px';
+                                    slot.appendChild(previewCard);
+
+                                    handContainer.classList.add('hide-others');
+                                    placeholder.style.display = 'none';
+                                }
+                            }
+                        } else {
+                            if (previewCard) previewCard.remove();
+                            if (lastSlot) {
+                                lastSlot.classList.remove('drag-over');
+                                lastSlot = null;
+                            }
+
+                            if (!isNearBoard) {
+                                handContainer.classList.remove('hide-others');
+                                placeholder.style.display = 'block';
+
+                                // Lógica de Reordenar Placeholder na Mão
+                                const siblings = Array.from(handContainer.children).filter(c => c !== d && c !== placeholder);
+                                let targetIdx = siblings.length;
+
+                                for (let j = 0; j < siblings.length; j++) {
+                                    const rect = siblings[j].getBoundingClientRect();
+                                    const centerX = rect.left + rect.width / 2;
+                                    if (ev.clientX < centerX) {
+                                        targetIdx = j;
+                                        break;
+                                    }
+                                }
+
+                                if (targetIdx >= siblings.length) {
+                                    handContainer.appendChild(placeholder);
+                                } else {
+                                    handContainer.insertBefore(placeholder, siblings[targetIdx]);
+                                }
+                                
+                                // Ajusta margens
+                                Array.from(handContainer.children).filter(c => c.style.display !== 'none').forEach((c, idx) => {
+                                    c.style.marginLeft = idx === 0 ? "0" : "-90px";
+                                });
+                            } else {
+                                handContainer.classList.add('hide-others');
+                                placeholder.style.display = 'none';
+                            }
+                        }
+                    };
+
+                    const onPointerUp = (ev) => {
+                        try {
+                            if (dragClone) dragClone.remove();
+                            if (previewCard) previewCard.remove();
+                            if (lastSlot) lastSlot.classList.remove('drag-over');
+                            
+                            let slot = null;
+                            if (isMyTurn) {
+                                const slots = document.querySelectorAll('#play-row .slot');
+                                for (const s of slots) {
+                                    const rect = s.getBoundingClientRect();
+                                    if (ev.clientX >= rect.left && ev.clientX <= rect.right && 
+                                        ev.clientY >= rect.top && ev.clientY <= rect.bottom) {
+                                        slot = s;
+                                        break;
+                                    }
+                                }
+                            }
+                            
+                            if (slot) {
+                                const currentCards = slot.querySelectorAll('.card-body:not(.preview-card)').length;
+                                if (currentCards < 3) {
+                                    // Removemos o original e o placeholder, o Firebase atualizará a mão
+                                    const col = slot.getAttribute('data-col');
+                                    // O índice a ser jogado é o que o placeholder ocupava
+                                    const siblings = Array.from(handContainer.children).filter(c => c !== d);
+                                    const newIdx = siblings.indexOf(placeholder);
+                                    window.playCardOnSlot(col, newIdx);
+                                }
+                            } else {
+                                // Reordenação finalizada: movemos d para a posição do placeholder
+                                placeholder.parentNode.insertBefore(d, placeholder);
+                                const childrenNodes = Array.from(handContainer.children).filter(c => c !== placeholder);
+                                const finalHandOrder = childrenNodes.map(node => {
+                                    return playerHand[parseInt(node.getAttribute('data-original-idx'))];
+                                });
+                                update(gameRef, { [`maos/${myID}`]: finalHandOrder });
+                            }
+                        } catch (err) {
+                            console.error("Erro no drop:", err);
+                        } finally {
+                            isDraggingLocal = false;
+                            if (placeholder) placeholder.remove();
+                            d.style.display = 'flex';
+                            d.style.opacity = '';
+                            d.classList.remove('ghost', 'dragging');
+                            handContainer.classList.remove('hide-others');
+                            window.removeEventListener('pointermove', onPointerMove);
+                            window.removeEventListener('pointerup', onPointerUp);
+                            updateHandUI();
+                        }
+                    };
+
+                    window.addEventListener('pointermove', onPointerMove);
+                    window.addEventListener('pointerup', onPointerUp);
+                };
+
                 h.appendChild(d);
             });
             if (isInitialDeal && playerHand.length === 5) { setTimeout(() => { isInitialDeal = false; }, 1500); }
@@ -1227,7 +1671,7 @@
                 if ((reveal && !isAlreadyRevealed) || (shouldShowMyColZero && !isAlreadyShowMyZero) || i >= currentCardsCount) {
                     const div = document.createElement('div');
                     let hidden = (idx == 0 && !reveal && (isOpp || cards.length < 3));
-                    let isImg = ((c.s === '♥' || c.s === '♦' || c.s === '♠') && c.type !== 'joker');
+                    let isImg = (c.s === '♥' || c.s === '♦' || c.s === '♠' || c.s === '♣' || c.type === 'joker');
                     div.className = `card-body ${c.color} ${c.type === 'joker' && !hidden ? 'joker-card' : ''} ${hidden ? 'card-back' : ''} ${!hidden && isImg ? 'card-img-wrapper' : ''}`;
                     if (!reveal && !shouldShowMyColZero && i >= currentCardsCount) div.classList.add('slot-card-anim');
                     div.style.top = (i * 60) + "px"; /* Adjusted for larger cards */
@@ -1237,10 +1681,8 @@
             });
 
             if (comboName && reveal) {
-                // Remove any existing label for this slot
                 const existingId = `combo-${row}-${idx}`;
-                const existing = document.getElementById(existingId);
-                if (existing) existing.remove();
+                if (document.getElementById(existingId)) return;
 
                 // Create label as a FIXED overlay (breaks out of 3D transform context)
                 const lbl = document.createElement('div');
@@ -1334,6 +1776,14 @@
 
         window.resetPlacar = async () => { if (gameRef) await update(gameRef, { wins: { p1: 0, p2: 0 } }); };
 
+        window.toggleFullScreen = () => {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(() => {});
+            } else {
+                if (document.exitFullscreen) document.exitFullscreen();
+            }
+        };
+
         // --- MATCHMAKING ---
         document.getElementById('btn-matchmaking').onclick = async () => {
             const btn = document.getElementById('btn-matchmaking');
@@ -1419,7 +1869,7 @@
                     let h = `<span style="font-size:10px; font-weight:bold; color:#94a3b8">${g.n}</span><div class="mini-slot">`;
                     g.c.forEach((card, i) => {
                         const v = card.slice(0, -1), s = card.slice(-1), color = (s === '♥' || s === '♦') ? 'red' : (s === '♠' ? 'blue' : 'black');
-                        let isImg = (s === '♥' || s === '♦' || s === '♠');
+                        let isImg = (s === '♥' || s === '♦' || s === '♠' || s === '♣');
                         h += `<div class="card-body ${color} ${isImg ? 'card-img-wrapper' : ''}" style="top:${i * 28}px; width:75px; height:105px; left:9px; font-size:12px;">${getCardInner(v, s, 'normal')}</div>`;
                     });
                     box.innerHTML = h + `</div>`; gList.appendChild(box);
