@@ -6,7 +6,6 @@
     <title>Three of a Kind (P2P - GitHub Pages)</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <!-- PeerJS: Biblioteca gratuita P2P (WebRTC) -->
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>👑</text></svg>">
     <style>
@@ -154,6 +153,252 @@
         .btn-ui:active { transform: translateY(2px); box-shadow: inset 4px 4px 0px #222; }
         .btn-ui:hover { background: #555; }
 
+        /* MODAIS */
+        #modal-regras, #modal-combos, #modal-config {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: #111;
+            width: 90%;
+            max-width: 650px;
+            max-height: 85vh;
+            overflow-y: auto;
+            padding: 30px;
+            border: 4px solid #444;
+            box-shadow: 8px 8px 0px #000, inset 4px 4px 0px #222;
+            position: relative;
+            line-height: 1.6;
+            color: #ccc;
+        }
+
+        .modal-content h2 { color: var(--accent); border-bottom: 4px solid #333; padding-bottom: 10px; margin-top: 20px; font-size: 1.2em; }
+        .modal-content h2:first-of-type { margin-top: 0; }
+        .modal-content h3 { color: var(--win); margin-top: 20px; font-size: 1em; }
+        .modal-content b { color: #fff; }
+
+        .close-modal {
+            position: absolute;
+            top: 15px; right: 15px;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: #64748b;
+            transition: 0.2s;
+            font-family: 'Press Start 2P';
+        }
+
+        .close-modal:hover { color: white; }
+
+        .btn-regras-game {
+            position: fixed;
+            bottom: 20px; right: 20px;
+            width: 50px; height: 50px;
+            background: var(--accent);
+            color: #000;
+            border: 4px solid #000;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 2000;
+            box-shadow: -4px 4px 0px #000;
+        }
+
+        .btn-regras-game:hover { transform: scale(1.1); background: #fee16d; }
+
+        /* TABULEIRO */
+        .status-msg {
+            font-size: 1.1em;
+            font-weight: bold;
+            min-width: 300px;
+            text-align: center;
+            text-transform: uppercase;
+            text-shadow: 4px 4px 0px rgba(0, 0, 0, 0.8);
+            letter-spacing: 2px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px 20px;
+            border: 2px solid #555;
+            box-shadow: 4px 4px 0px #000;
+        }
+
+        .status-your { color: var(--accent); }
+        .status-opp { color: #888; }
+        .status-waiting { color: #ffffff; opacity: 0.6; }
+
+        .game-world {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            perspective: 2500px;
+            overflow: visible;
+        }
+
+        #board-wrapper {
+            transform-style: preserve-3d;
+            transform: rotateX(28deg) translateY(-280px);
+            transition: 0.5s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: repeat(5, 220px);
+            gap: 35px;
+            margin: 10px 0;
+            position: relative;
+        }
+
+        .slot {
+            width: 220px;
+            height: 415px;
+            border: 2px solid rgba(244, 208, 63, 0.2);
+            background: rgba(0, 0, 0, 0.3);
+            position: relative;
+            cursor: pointer;
+            transition: 0.2s;
+            z-index: 10;
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.8);
+            overflow: visible;
+        }
+
+        .slot:hover { background: rgba(244, 208, 63, 0.1); border-color: var(--accent); }
+        .slot[data-col="0"] { border-style: double; border-width: 4px; border-color: var(--accent-dark); }
+
+        .round-markers {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            position: absolute;
+            left: -45px;
+            height: 100%;
+            justify-content: center;
+            pointer-events: none;
+        }
+
+        .dot {
+            width: 30px; height: 30px;
+            background: transparent;
+            border: none;
+            display: flex; align-items: center; justify-content: center;
+            transition: 0.3s;
+            font-size: 24px;
+            filter: grayscale(1) opacity(0.4);
+        }
+
+        .dot::after { content: '👑'; }
+        .dot.active { filter: drop-shadow(0px 0px 8px var(--accent)); transform: scale(1.3); }
+
+        .card-body {
+            width: 200px; height: 290px;
+            background: transparent;
+            color: black;
+            border: none;
+            box-sizing: border-box;
+            display: flex; flex-direction: column;
+            position: absolute; left: 10px;
+            pointer-events: none;
+            overflow: hidden;
+            image-rendering: pixelated;
+        }
+
+        .card-info {
+            padding: 8px;
+            display: flex; justify-content: space-between;
+            font-weight: 900; font-size: 1.5em; line-height: 1;
+            width: 100%; box-sizing: border-box;
+            font-family: 'Press Start 2P', cursive;
+        }
+
+        .red { color: #850000 !important; }
+        .blue { color: #000085 !important; }
+
+        .card-back { background: transparent !important; border: none !important; color: transparent !important; }
+        .card-back::after {
+            content: ''; display: block; width: 100%; height: 100%;
+            background: url('assets/cards/back_card.png') center center / cover no-repeat;
+            image-rendering: pixelated;
+        }
+
+        .joker-card { background: transparent !important; border-color: transparent !important; }
+        .card-img-wrapper { background: transparent !important; border-color: transparent !important; }
+
+        .btn-combos-game {
+            position: fixed; bottom: 20px; right: 80px;
+            width: 50px; height: 50px;
+            background: #2b6cb0; color: white; border: 4px solid #000;
+            font-size: 20px; cursor: pointer; z-index: 2000;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: -4px 4px 0px #000, inset 4px 4px 0px #4299e1;
+        }
+
+        .btn-config-game {
+            position: fixed; bottom: 20px; right: 140px;
+            width: 50px; height: 50px;
+            background: #4a5568; color: white; border: 4px solid #000;
+            font-size: 20px; cursor: pointer; z-index: 2000;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: -4px 4px 0px #000, inset 4px 4px 0px #718096;
+        }
+
+        .combo-label {
+            position: fixed;
+            text-align: center;
+            background: #000; border: 8px solid #fff; color: #fff;
+            padding: 16px 12px; font-size: 18px; font-weight: bold;
+            text-transform: uppercase; z-index: 500; opacity: 0; pointer-events: none;
+            animation: bannerUnfurl 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            line-height: 1.3; box-sizing: border-box;
+            font-family: 'Press Start 2P', cursive;
+            transform-origin: center center;
+        }
+
+        .combo-label.win { background: #276749; border-color: #48bb78; }
+        .combo-label.loss { background: #742a2a; border-color: #f56565; }
+
+        @keyframes bannerUnfurl {
+            0% { opacity: 0; transform: scaleX(0) scaleY(0.3); }
+            80% { opacity: 1; transform: scaleX(1.05) scaleY(1.1); }
+            100% { opacity: 1; transform: scaleX(1) scaleY(1); }
+        }
+
+        #hand-area {
+            width: 100vw; display: flex; justify-content: center;
+            padding: 0; background: transparent; position: absolute; bottom: 80px;
+            z-index: 2000; box-sizing: border-box; pointer-events: none;
+        }
+
+        #hand.hide-all .hand-card { transform: translateY(400px) !important; opacity: 0; pointer-events: none; }
+        #hand.hide-others .hand-card:not(.dragging) { transform: translateY(400px) !important; opacity: 0; pointer-events: none; }
+
+        #hand { display: flex; min-height: 250px; align-items: center; justify-content: center; }
+        #hand .card-body { width: 220px !important; height: 320px !important; position: relative !important; left: 0 !important; }
+
+        .hand-card {
+            cursor: pointer !important; transition: transform 0.3s, margin 0.3s, box-shadow 0.3s;
+            position: relative; pointer-events: auto !important; transform-origin: bottom center;
+            transform: translateY(var(--fan-y, 0px)) rotate(var(--fan-rotate, 0deg)); touch-action: none;
+        }
+
+        .hand-card:hover { transform: translateY(calc(var(--fan-y, 0px) - 30px)) rotate(var(--fan-rotate, 0deg)) scale(1.05); z-index: 50 !important; }
+        .hand-card.selected { transform: translateY(calc(var(--fan-y, 0px) - 60px)) rotate(var(--fan-rotate, 0deg)); z-index: 100 !important; border-color: var(--accent) !important; box-shadow: 0 0 0 4px #fff, 0 0 20px var(--accent); }
+        .hand-card.ghost { opacity: 0.4; filter: grayscale(0.5); pointer-events: none; }
+        .slot.drag-over { background: rgba(244, 208, 63, 0.3) !important; border-color: var(--accent) !important; box-shadow: inset 0 0 30px var(--accent) !important; }
+        .preview-card { opacity: 0.5; pointer-events: none; position: absolute; z-index: 5; filter: brightness(1.2); }
+
         /* OVERLAYS */
         #lobby-overlay {
             display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -198,38 +443,543 @@
         #end-game-overlay { z-index: 4000; }
         #reset-request-overlay { z-index: 5000; }
         #disconnect-overlay { z-index: 6000; }
+
+        .combo-grid {
+            display: flex; gap: 30px; justify-content: center; margin-top: 10px; flex-wrap: wrap;
+            max-height: 70vh; overflow-y: auto; padding: 10px;
+        }
+
+        .mini-slot { width: 95px; height: 150px; position: relative; border: 4px solid #333; background: #000; box-shadow: inset 4px 4px 0px #111; }
+
+        .btn-copy-colar {
+            background: #334155; border: none; color: white; padding: 8px 15px; border-radius: 6px;
+            font-size: 11px; cursor: pointer; margin-top: 10px; text-transform: uppercase; font-weight: bold;
+        }
+
+        #landscape-warning {
+            display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: #000; color: #fff; z-index: 999999; flex-direction: column;
+            justify-content: center; align-items: center; text-align: center; font-family: 'Press Start 2P', cursive;
+        }
+
+        @keyframes rotatePhone { 0% { transform: rotate(0deg); } 50% { transform: rotate(-90deg); } 100% { transform: rotate(-90deg); } }
+
+        @media screen and (max-width: 1024px) and (orientation: portrait) {
+            body.force-landscape #landscape-warning { display: flex; }
+            body.force-landscape #game-container, body.force-landscape .global-wins, body.force-landscape .room-info-box { display: none !important; }
+        }
+
+        @media screen and (max-width: 1200px) {
+            .row { grid-template-columns: repeat(5, 130px); gap: 10px; }
+            .slot { width: 130px; height: 250px; }
+            .card-body { width: 115px; height: 165px; left: 7px; }
+            #hand .card-body { width: 120px !important; height: 175px !important; }
+            .hand-card { margin-left: -50px !important; }
+            .global-wins, .room-info-box { padding: 4px 6px; font-size: 8px; }
+            .global-wins span, .room-info-box span { font-size: 12px; }
+            .btn-ui { padding: 6px 10px; font-size: 7px; }
+            .status-msg { font-size: 0.7em; min-width: 150px; padding: 5px 10px; }
+            .top-bar { margin: 10px 0; gap: 10px; }
+            .volume-controls { left: 5px; bottom: 5px; padding: 5px; }
+            .vol-item input { width: 30px; }
+        }
+
+        .rules-row { display: flex; align-items: center; gap: 20px; margin-bottom: 25px; background: rgba(255,255,255,0.05); padding: 15px; border-left: 4px solid var(--accent); }
+        .rules-text { flex: 1; }
+        .rules-img-stack { display: flex; gap: 5px; min-width: 150px; justify-content: center; }
+        .rules-card-img { width: 70px; height: 105px; border: 2px solid #000; box-shadow: 2px 2px 5px rgba(0,0,0,0.5); image-rendering: pixelated; }
     </style>
 </head>
 
 <body>
     <div id="bg-layer"></div>
+    <div id="landscape-warning">
+        <div style="font-size: 50px; margin-bottom: 20px; animation: rotatePhone 2s infinite ease-in-out;">📱</div>
+        <h2 style="font-size: 16px; color: var(--accent); margin-bottom: 15px;">MODO PAISAGEM</h2>
+        <p style="font-size: 10px; line-height: 1.5; padding: 0 20px;">Por favor, vire o seu celular na horizontal para jogar o Bettle Trinca.</p>
+    </div>
+
+    <audio id="snd-match" src="sonds/effect/effect_01.mp3" preload="auto"></audio>
+    <audio id="snd-drop1" src="sonds/effect/effect_02.mp3" preload="auto"></audio>
+    <audio id="snd-drop2" src="sonds/effect/effect_03.mp3" preload="auto"></audio>
+    <audio id="snd-turn" src="sonds/effect/effect_04.mp3" preload="auto"></audio>
+    <audio id="snd-win" src="sonds/effect/effect_05.mp3" preload="auto"></audio>
+    <audio id="snd-lose" src="sonds/effect/effect_06.mp3" preload="auto"></audio>
+    <audio id="snd-select" src="sonds/effect/effect_07.mp3" preload="auto"></audio>
+    <audio id="bg-music" preload="auto"></audio>
+
+    <!-- MODAL DE REGRAS -->
+    <div id="modal-regras">
+        <div class="modal-content" style="max-width: 750px;">
+            <span class="close-modal" id="btn-fechar-regras">&times;</span>
+            <h2 style="color: var(--accent); border-bottom: 4px solid var(--accent); text-align:center; font-size: 16px; margin-bottom: 25px;">
+                📖 LIVRO DE REGRAS: THREE OF A KIND (P2P)
+            </h2>
+
+            <div class="rules-row">
+                <div class="rules-text">
+                    <h3>1. O OBJETIVO</h3>
+                    <p>Vença a disputa em <b>3 das 5 colunas</b> da mesa. Cada coluna é um mini-duelo onde você deve formar a melhor Trinca (mão de 3 cartas).</p>
+                </div>
+                <div class="rules-img-stack">
+                    <img src="assets/cards/ace_hearts.png" class="rules-card-img" style="transform: rotate(-5deg)">
+                    <img src="assets/cards/ace_spades.png" class="rules-card-img" style="transform: rotate(5deg); margin-left: -40px;">
+                </div>
+            </div>
+
+            <div class="rules-row">
+                <div class="rules-text">
+                    <h3>2. A COLUNA ZERO (ESTRATÉGIA)</h3>
+                    <p>A primeira coluna é secreta. As cartas jogadas aqui ficam <b>viradas para baixo</b> e só são reveladas no final.</p>
+                </div>
+                <div class="rules-img-stack">
+                    <img src="assets/cards/back_card.png" class="rules-card-img">
+                </div>
+            </div>
+
+            <div class="rules-row">
+                <div class="rules-text">
+                    <h3>3. CORINGAS (WILD CARDS)</h3>
+                    <p>O <b>Coringa (JK)</b> assume o valor e naipe necessários para completar o <b>maior combo possível</b>.</p>
+                </div>
+                <div class="rules-img-stack">
+                    <img src="assets/cards/joker_1.png" class="rules-card-img">
+                </div>
+            </div>
+
+            <button class="lobby-btn lobby-btn-create" style="margin-top: 30px;" id="btn-entendi-regras">VAMOS JOGAR!</button>
+        </div>
+    </div>
+
+    <!-- MODAL COMBOS -->
+    <div id="modal-combos">
+        <div class="modal-content" style="max-width: 800px;">
+            <span class="close-modal" id="btn-fechar-combos">&times;</span>
+            <h2 style="color: #3498db; border-bottom: 4px solid #3498db; text-align:center; font-size: 14px;">🏆 COMBOS E VALORES</h2>
+            <div class="combo-grid" id="combo-list"></div>
+        </div>
+    </div>
+
+    <!-- MODAL CONFIGURAÇÃO -->
+    <div id="modal-config">
+        <div class="modal-content" style="max-width: 500px; text-align: center;">
+            <span class="close-modal" id="btn-fechar-config">&times;</span>
+            <h2 style="color: #a0aec0; border-bottom: 4px solid #a0aec0; font-size: 14px;">⚙️ CONFIGURAÇÕES</h2>
+            
+            <div style="margin-top: 30px;">
+                <label for="board-scale" style="font-size: 10px; color: #fff; display: block; margin-bottom: 15px;">ZOOM DA MESA: <span id="scale-val">100%</span></label>
+                <input type="range" id="board-scale" min="0.4" max="1.5" step="0.05" value="1">
+            </div>
+
+            <div style="margin-top: 25px;">
+                <label for="hand-scale" style="font-size: 10px; color: #fff; display: block; margin-bottom: 15px;">ZOOM DA MÃO: <span id="hand-scale-val">100%</span></label>
+                <input type="range" id="hand-scale" min="0.5" max="1.5" step="0.05" value="1">
+            </div>
+
+            <div style="margin-top: 25px;">
+                <label for="bg-scale" style="font-size: 10px; color: #fff; display: block; margin-bottom: 15px;">ZOOM DO FUNDO: <span id="bg-scale-val">100%</span></label>
+                <input type="range" id="bg-scale" min="1" max="2" step="0.05" value="1">
+            </div>
+
+            <div style="margin-top: 25px;">
+                <label for="ui-scale" style="font-size: 10px; color: #fff; display: block; margin-bottom: 15px;">ZOOM DA INTERFACE: <span id="ui-scale-val">100%</span></label>
+                <input type="range" id="ui-scale" min="0.5" max="1.5" step="0.05" value="1">
+            </div>
+            
+            <button class="lobby-btn" style="background: #a0aec0; color: #000; margin-top: 30px;" id="btn-fechar-config-ok">FECHAR</button>
+        </div>
+    </div>
 
     <div id="disconnect-overlay">
         <h1 style="color: var(--loss); font-size: 3em;">OPONENTE SAIU</h1>
-        <p style="font-size: 1.2em; opacity: 0.8;">A conexão P2P com o oponente foi encerrada.</p>
+        <p style="font-size: 1.2em; opacity: 0.8;">A conexão Peer-to-Peer foi encerrada.</p>
         <p style="margin-top: 20px; color: var(--accent);">Voltando ao Lobby em 2 segundos...</p>
     </div>
 
+    <!-- LOBBY OVERLAY -->
     <div id="lobby-overlay">
         <div class="lobby-box" id="lobby-step-1">
             <img src="assets/logo.png" alt="Three of a Kind" style="max-width: 280px; width: 100%; margin-bottom: 30px; image-rendering: pixelated;">
+            <button class="lobby-btn" style="background: var(--win); color: white; margin-bottom: 20px;" id="btn-matchmaking">ENCONTRAR PARTIDA</button>
             <button class="lobby-btn lobby-btn-create" id="btn-criar-sala">CRIAR SALA (P2P)</button>
             <button class="lobby-btn" style="background:transparent; color:white; border:1px solid #334155;" id="btn-entrar-sala">ENTRAR EM SALA</button>
+            <button class="btn-ui" style="margin-top: 15px; width: 100%; color: var(--accent); border-color: var(--accent);" id="btn-regras-lobby">COMO JOGAR?</button>
         </div>
         <div class="lobby-box" id="lobby-step-2" style="display:none"></div>
     </div>
 
+    <!-- GAME CONTAINER -->
     <div id="game-container" style="display:none;">
+        <button class="btn-regras-game" id="btn-regras-game">?</button>
+        <button class="btn-combos-game" id="btn-combos-game">🏆</button>
+        <button class="btn-config-game" id="btn-config-game">⚙️</button>
+
+        <div class="volume-controls">
+            <div class="vol-item"><span>MUSICA</span><input type="range" id="vol-bg" min="0" max="1" step="0.05" value="0.1"></div>
+            <div class="vol-item" style="margin-top:10px;"><span>SOM</span><input type="range" id="vol-fx" min="0" max="1" step="0.05" value="1"></div>
+        </div>
+
+        <div id="reset-request-overlay">
+            <h2 id="reset-msg" style="font-size: 2em; margin-bottom: 20px;">OPONENTE QUER REINICIAR</h2>
+            <div id="reset-btns" style="display:flex; gap: 20px;">
+                <button class="btn-ui" style="background: var(--win); padding: 15px 35px;" id="btn-reset-sim">ACEITAR</button>
+                <button class="btn-ui" style="background: var(--loss); padding: 15px 35px;" id="btn-reset-nao">RECUSAR</button>
+            </div>
+        </div>
+
+        <div id="end-game-overlay">
+            <h1 id="end-title">VITÓRIA!</h1>
+            <div style="display:flex; gap: 20px;">
+                <button class="btn-ui" style="padding: 20px 40px; background: var(--win);" id="btn-jogar-novamente">JOGAR NOVAMENTE</button>
+                <button class="btn-ui" style="padding: 20px 40px; background: #334155;" id="btn-sair-final">SAIR DA MESA</button>
+            </div>
+        </div>
+
         <div class="room-info-box">
             <div style="font-size: 10px; margin-bottom: 10px; color: #ccc;">SALA P2P</div>
             <span id="room-code-header">---</span>
+            <button class="btn-ui" style="margin-top: 15px; width: 100%; padding: 10px; font-size: 8px;" onclick="window.toggleFullScreen()">TELA CHEIA</button>
+        </div>
+
+        <div class="global-wins">
+            <div style="font-size: 10px; margin-bottom: 10px;">ID: <b id="player-id-display">...</b></div>
+            <div style="font-size: 12px;">PLACAR</div>
+            <div style="display: flex; gap: 20px; margin-top: 15px; font-size:10px;">
+                <div>P1<span id="win-p1" style="display:block; font-size:24px; color:var(--win); margin-top:5px;">0</span></div>
+                <div>P2<span id="win-p2" style="display:block; font-size:24px; color:var(--win); margin-top:5px;">0</span></div>
+            </div>
+            <button class="btn-ui" style="margin-top: 15px; width: 100%; padding: 10px; font-size: 8px;" onclick="window.resetPlacar()">RESET</button>
         </div>
 
         <div class="top-bar">
-            <div class="status-msg" id="msg" style="font-size: 1em;">CONECTADO VIA WEBRTC (SEM FIREBASE)</div>
+            <div class="status-msg" id="msg" style="font-size: 1em;">AGUARDANDO...</div>
+            <button class="btn-ui" onclick="window.solicitarReiniciar()" style="font-size: 8px;">REINICIAR</button>
+        </div>
+
+        <div class="game-world">
+            <div id="board-wrapper">
+                <div id="board">
+                    <div class="row" id="opp-row">
+                        <div class="round-markers" id="dots-opp" style="left: -65px;">
+                            <div class="dot" id="p1-dot-0"></div>
+                            <div class="dot" id="p1-dot-1"></div>
+                            <div class="dot" id="p1-dot-2"></div>
+                        </div>
+                        <div class="slot" data-col="0"></div>
+                        <div class="slot" data-col="1"></div>
+                        <div class="slot" data-col="2"></div>
+                        <div class="slot" data-col="3"></div>
+                        <div class="slot" data-col="4"></div>
+                    </div>
+                    <div style="height: 1px; background: rgba(255,255,255,0.1); margin: 10px 0;"></div>
+                    <div class="row" id="play-row">
+                        <div class="round-markers" id="dots-my" style="left: -65px;">
+                            <div class="dot" id="p2-dot-0"></div>
+                            <div class="dot" id="p2-dot-1"></div>
+                            <div class="dot" id="p2-dot-2"></div>
+                        </div>
+                        <div class="slot" data-col="0"></div>
+                        <div class="slot" data-col="1"></div>
+                        <div class="slot" data-col="2"></div>
+                        <div class="slot" data-col="3"></div>
+                        <div class="slot" data-col="4"></div>
+                    </div>
+                </div>
+
+                <div class="deck-visual" style="position: absolute; right: -210px; top: 50%; transform: translateY(-50%); width: 180px; height: 270px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end;">
+                    <div class="card-body card-back" style="width: 180px; height: 270px; position: absolute; top: -15px; left: 0px; z-index: 6;"></div>
+                    <div style="position: absolute; bottom: -55px; text-align: center; z-index: 10;">
+                        <div id="count" style="font-size: 28px; font-weight: bold; color: var(--accent);">--</div>
+                        <div style="font-size: 7px; margin-top: 4px; color: #fff;">RESTAM</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="hand-area">
+                <div id="hand"></div>
+            </div>
         </div>
     </div>
 
-    <!-- CÓDIGO COMPLETO P2P DISPONÍVEL NO REPOSITÓRIO E ARTIFACTION -->
+    <!-- SCRIPT DE JOGO P2P SEM FIREBASE -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const getEl = id => document.getElementById(id);
+
+            // Modais
+            const modalRegras = getEl('modal-regras');
+            const modalCombos = getEl('modal-combos');
+            const modalConfig = getEl('modal-config');
+
+            const abrirRegras = () => { if(modalRegras) modalRegras.style.display = 'flex'; };
+            const fecharRegras = () => { if(modalRegras) modalRegras.style.display = 'none'; };
+            const abrirCombos = () => { if(modalCombos) modalCombos.style.display = 'flex'; };
+            const fecharCombos = () => { if(modalCombos) modalCombos.style.display = 'none'; };
+            const abrirConfig = () => { if(modalConfig) modalConfig.style.display = 'flex'; };
+            const fecharConfig = () => { if(modalConfig) modalConfig.style.display = 'none'; };
+
+            if(getEl('btn-regras-lobby')) getEl('btn-regras-lobby').onclick = abrirRegras;
+            if(getEl('btn-regras-game')) getEl('btn-regras-game').onclick = abrirRegras;
+            if(getEl('btn-fechar-regras')) getEl('btn-fechar-regras').onclick = fecharRegras;
+            if(getEl('btn-entendi-regras')) getEl('btn-entendi-regras').onclick = fecharRegras;
+            if(getEl('btn-combos-game')) getEl('btn-combos-game').onclick = abrirCombos;
+            if(getEl('btn-fechar-combos')) getEl('btn-fechar-combos').onclick = fecharCombos;
+            if(getEl('btn-config-game')) getEl('btn-config-game').onclick = abrirConfig;
+            if(getEl('btn-fechar-config')) getEl('btn-fechar-config').onclick = fecharConfig;
+            if(getEl('btn-fechar-config-ok')) getEl('btn-fechar-config-ok').onclick = fecharConfig;
+
+            // Audio & Controles
+            const bgMusic = getEl('bg-music');
+            const volBgInput = getEl('vol-bg');
+            const volFxInput = getEl('vol-fx');
+
+            function playSnd(id) {
+                const el = getEl(id);
+                if (el) { el.volume = volFxInput ? volFxInput.value : 1; el.currentTime = 0; el.play().catch(() => {}); }
+            }
+
+            // PEERJS VARS
+            let peer = null;
+            let conn = null;
+            let myID = 'p1';
+            let oppID = 'p2';
+            let isHost = false;
+            let currentRoomCode = '';
+
+            let gameState = {
+                p1_online: false,
+                p2_online: false,
+                turn: 'waiting',
+                wins: { p1: 0, p2: 0 },
+                deckCount: 0,
+                maos: { p1: [], p2: [] },
+                board: {
+                    p1: { col0: [], col1: [], col2: [], col3: [], col4: [] },
+                    p2: { col0: [], col1: [], col2: [], col3: [], col4: [] }
+                },
+                times: { p1: {}, p2: {} },
+                deck: [],
+                resetRequest: null
+            };
+
+            function broadcastState() {
+                if (isHost && conn && conn.open) {
+                    conn.send({ type: 'STATE_UPDATE', state: gameState });
+                }
+                renderState(gameState);
+            }
+
+            function setupPeerListeners() {
+                conn.on('open', () => {
+                    if (isHost) {
+                        gameState.p2_online = true;
+                        reiniciarJogo();
+                    } else {
+                        conn.send({ type: 'PLAYER_JOINED' });
+                    }
+                    startGameUI();
+                    playSnd('snd-match');
+                });
+
+                conn.on('data', (data) => {
+                    if (data.type === 'STATE_UPDATE') {
+                        gameState = data.state;
+                        renderState(gameState);
+                    } else if (data.type === 'PLAY_CARD' && isHost) {
+                        ejecutarJogada(data.player, data.col, data.handIndex);
+                    } else if (data.type === 'SOLICITAR_RESET' && isHost) {
+                        gameState.resetRequest = data.player;
+                        broadcastState();
+                    } else if (data.type === 'ACEITAR_RESET' && isHost) {
+                        reiniciarJogo();
+                    }
+                });
+
+                conn.on('close', () => {
+                    if (getEl('disconnect-overlay')) getEl('disconnect-overlay').style.display = 'flex';
+                    playSnd('snd-lose');
+                    setTimeout(() => location.reload(), 2500);
+                });
+            }
+
+            // LOBBY ACTIONS
+            if (getEl('btn-criar-sala')) {
+                getEl('btn-criar-sala').onclick = () => {
+                    const code = Math.random().toString(36).substring(2, 7).toUpperCase();
+                    currentRoomCode = code;
+                    myID = 'p1'; oppID = 'p2'; isHost = true;
+
+                    peer = new Peer('TRINCA-' + code);
+                    peer.on('open', () => {
+                        gameState.p1_online = true;
+                        getEl('lobby-step-1').style.display = 'none';
+                        const s2 = getEl('lobby-step-2');
+                        s2.style.display = 'block';
+                        s2.innerHTML = `<button class="btn-ui" onclick="location.reload()" style="position:absolute; top:10px; left:10px;">Voltar</button><h2>Sala P2P:</h2><div class="room-code-display">${code}</div><button class="btn-copy-colar" id="btn-copiar">Copiar Código</button><p style="margin-top:20px;">Aguardando oponente...</p>`;
+                        getEl('btn-copiar').onclick = () => { navigator.clipboard.writeText(code); alert("Código copiado!"); };
+                    });
+
+                    peer.on('connection', c => {
+                        conn = c;
+                        setupPeerListeners();
+                    });
+
+                    peer.on('error', err => alert("Erro PeerJS: " + err.type));
+                };
+            }
+
+            if (getEl('btn-entrar-sala')) {
+                getEl('btn-entrar-sala').onclick = () => {
+                    getEl('lobby-step-1').style.display = 'none';
+                    const s2 = getEl('lobby-step-2');
+                    s2.style.display = 'block';
+                    s2.innerHTML = `<button class="btn-ui" onclick="location.reload()" style="position:absolute; top:10px; left:10px;">Voltar</button><h2 style="margin-top:30px;">Entrar na Sala</h2><input type="text" id="in-code" class="lobby-input" placeholder="CÓDIGO"><button class="lobby-btn lobby-btn-create" style="margin-top:20px;" id="go">ENTRAR</button>`;
+
+                    getEl('go').onclick = () => {
+                        const code = getEl('in-code').value.trim().toUpperCase();
+                        if (!code) return alert("Digite o código da sala!");
+                        currentRoomCode = code;
+                        myID = 'p2'; oppID = 'p1'; isHost = false;
+
+                        peer = new Peer();
+                        peer.on('open', () => {
+                            conn = peer.connect('TRINCA-' + code);
+                            setupPeerListeners();
+                        });
+                    };
+                };
+            }
+
+            if (getEl('btn-matchmaking')) {
+                getEl('btn-matchmaking').onclick = () => {
+                    alert("Para jogar via P2P com amigos, use 'CRIAR SALA' e compartilhe o código!");
+                };
+            }
+
+            function startGameUI() {
+                getEl('lobby-overlay').style.display = 'none';
+                getEl('game-container').style.display = 'block';
+                getEl('player-id-display').innerText = myID.toUpperCase();
+                getEl('room-code-header').innerText = currentRoomCode;
+            }
+
+            function createDeck() {
+                const v = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'], n = ['♥', '♦', '♣', '♠'], d = [];
+                n.forEach(s => v.forEach(val => d.push({ v: val, s, color: (s === '♥' || s === '♦') ? 'red' : (s === '♠' ? 'blue' : 'black') })));
+                d.push({ v: 'JK', s: '★', type: 'joker', color: 'black', jId: 1 }, { v: 'JK', s: '★', type: 'joker', color: 'black', jId: 2 });
+                for (let i = d.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [d[i], d[j]] = [d[j], d[i]]; }
+                return d;
+            }
+
+            function reiniciarJogo() {
+                if (!isHost) return;
+                let deck = createDeck();
+                gameState.maos.p1 = deck.splice(0, 5);
+                gameState.maos.p2 = deck.splice(0, 5);
+                gameState.deck = deck;
+                gameState.deckCount = deck.length;
+                gameState.board = { p1: { col0: [], col1: [], col2: [], col3: [], col4: [] }, p2: { col0: [], col1: [], col2: [], col3: [], col4: [] } };
+                gameState.turn = 'p1';
+                gameState.resetRequest = null;
+                broadcastState();
+            }
+
+            function ejecutarJogada(player, col, handIndex) {
+                let mao = [...gameState.maos[player]];
+                let cardsInSlot = gameState.board[player][`col${col}`];
+                if (cardsInSlot.length < 3) {
+                    const card = mao.splice(handIndex, 1)[0];
+                    cardsInSlot.push(card);
+                    if (gameState.deck.length > 0) mao.push(gameState.deck.shift());
+                    gameState.maos[player] = mao;
+                    gameState.deckCount = gameState.deck.length;
+                    gameState.turn = player === 'p1' ? 'p2' : 'p1';
+                    broadcastState();
+                }
+            }
+
+            window.playCardOnSlot = (col, handIndex) => {
+                if (gameState.turn !== myID) return;
+                if (isHost) ejecutarJogada(myID, col, handIndex);
+                else conn.send({ type: 'PLAY_CARD', player: myID, col, handIndex });
+            };
+
+            function getCardInner(v, s, type, jId) {
+                if (type === 'joker') return `<img src="assets/cards/joker_${jId || 1}.png" style="width: 100%; height: 100%; object-fit: fill; display: block;">`;
+                const suitMap = { '♥': 'hearts', '♦': 'diamonds', '♠': 'spades', '♣': 'clubs' };
+                const valMap = { 'A': 'ace', 'K': 'king', 'Q': 'queen', 'J': 'jack' };
+                if (suitMap[s]) {
+                    const valName = valMap[v] || v;
+                    return `<img src="assets/cards/${valName}_${suitMap[s]}.png" style="width: 100%; height: 100%; object-fit: fill; display: block;">`;
+                }
+                return `<div class="card-info"><span>${v}</span><span>${s}</span></div>`;
+            }
+
+            function renderState(data) {
+                getEl('count').innerText = data.deckCount || 0;
+                getEl('win-p1').innerText = data.wins.p1;
+                getEl('win-p2').innerText = data.wins.p2;
+
+                const isMyTurn = (data.turn === myID);
+                const m = getEl('msg');
+                if(m) {
+                    m.innerText = isMyTurn ? "SUA VEZ!" : "OPONENTE...";
+                    m.className = `status-msg ${isMyTurn ? 'status-your' : 'status-opp'}`;
+                }
+
+                // Renderizar Mão
+                const h = getEl('hand');
+                if (h) {
+                    h.innerHTML = '';
+                    (data.maos[myID] || []).forEach((c, i) => {
+                        const d = document.createElement('div');
+                        let isImg = (c.s === '♥' || c.s === '♦' || c.s === '♠' || c.s === '♣' || c.type === 'joker');
+                        d.className = `card-body hand-card ${c.color} ${isImg ? 'card-img-wrapper' : ''}`;
+                        d.style.position = "relative";
+                        d.style.left = "0";
+                        d.style.marginLeft = i === 0 ? "0" : "-90px";
+                        d.innerHTML = getCardInner(c.v, c.s, c.type, c.jId);
+                        
+                        d.onclick = () => {
+                            if (!isMyTurn) return;
+                            // Tentar jogar na primeira coluna com espaço disponível (0 a 4)
+                            for(let col = 0; col < 5; col++) {
+                                if (data.board[myID][`col${col}`].length < 3) {
+                                    window.playCardOnSlot(col, i);
+                                    playSnd('snd-drop1');
+                                    break;
+                                }
+                            }
+                        };
+                        h.appendChild(d);
+                    });
+                }
+
+                // Renderizar Tabuleiro (minhas colunas e do oponente)
+                for (let i = 0; i < 5; i++) {
+                    renderSlotCol('play-row', i, data.board[myID][`col${i}`], false);
+                    renderSlotCol('opp-row', i, data.board[oppID][`col${i}`], true);
+                }
+            }
+
+            function renderSlotCol(rowId, colIdx, cards, isOpp) {
+                const row = getEl(rowId);
+                if (!row) return;
+                const slot = row.querySelector(`[data-col="${colIdx}"]`);
+                if (!slot) return;
+                slot.innerHTML = '';
+                (cards || []).forEach((c, i) => {
+                    const div = document.createElement('div');
+                    let hidden = (colIdx == 0 && (isOpp || cards.length < 3));
+                    let isImg = (c.s === '♥' || c.s === '♦' || c.s === '♠' || c.s === '♣' || c.type === 'joker');
+                    div.className = `card-body ${c.color} ${hidden ? 'card-back' : ''} ${!hidden && isImg ? 'card-img-wrapper' : ''}`;
+                    div.style.top = (i * 60) + "px";
+                    if (!hidden) div.innerHTML = getCardInner(c.v, c.s, c.type, c.jId);
+                    slot.appendChild(div);
+                });
+            }
+        });
+    </script>
 </body>
+
 </html>
