@@ -3,10 +3,9 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Three of a Kind</title>
+    <title>Three of a Kind (MQTT Serverless)</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <!-- Conexão Realtime via WebSocket MQTT (Zero Erros de Permissão) -->
     <script src="https://unpkg.com/mqtt@4.3.7/dist/mqtt.min.js"></script>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>👑</text></svg>">
     <style>
@@ -49,21 +48,6 @@
         }
 
         img { image-rendering: pixelated; }
-
-        @keyframes drawCardAnim {
-            0% { opacity: 0; transform: translate(600px, -200px) scale(0.4) rotate(45deg); filter: blur(5px); }
-            60% { opacity: 1; transform: translate(-20px, 20px) scale(1.05) rotate(calc(var(--fan-rotate, 0deg) - 10deg)); }
-            100% { opacity: 1; transform: translateY(var(--fan-y, 0px)) scale(1) rotate(var(--fan-rotate, 0deg)); filter: blur(0); }
-        }
-
-        .new-card-anim { animation: drawCardAnim 0.7s cubic-bezier(0.19, 1, 0.22, 1) backwards; }
-
-        @keyframes dropOnTable {
-            0% { opacity: 0; transform: scale(2) translateY(-100px) rotateX(45deg); filter: brightness(3) blur(10px); }
-            100% { opacity: 1; transform: scale(1) translateY(0) rotateX(0); filter: brightness(1) blur(0); }
-        }
-
-        .slot-card-anim { animation: dropOnTable 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.2) forwards; }
 
         .global-wins {
             position: absolute; top: 10px; right: 10px;
@@ -246,7 +230,7 @@
         </div>
     </div>
 
-    <!-- ENGINE MULTIPLAYER WEBSOCKET (MQTT EMQX BRASIL/GLOBAL) -->
+    <!-- ENGINE MULTIPLAYER WEBSOCKET (MQTT BROKER COM MATCHMAKING E TRANSITION SYNC) -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const getEl = id => document.getElementById(id);
@@ -281,7 +265,7 @@
             function playSnd(id) { const el = getEl(id); if (el) { el.currentTime = 0; el.play().catch(()=>{}); } }
 
             client.on('connect', () => {
-                client.subscribe('poker_baiano/matchmaking');
+                console.log("Conectado ao broker MQTT!");
             });
 
             client.on('message', (topic, message) => {
@@ -289,11 +273,17 @@
                     const payload = JSON.parse(message.toString());
 
                     if (topic === currentTopic) {
+                        // FIX CRÍTICO: Quando P1 (Host) recebe a notificação de que P2 entrou, inicia o jogo para o Host também!
                         if (payload.type === 'PLAYER_JOINED' && isHost) {
                             gameState.p2_online = true;
+                            startGame();
                             syncHostState();
+                            playSnd('snd-match');
                         } else if (payload.type === 'STATE_UPDATE') {
                             gameState = payload.state;
+                            if (gameState.p2_online || gameState.p1_online) {
+                                startGame();
+                            }
                             renderGame();
                         } else if (payload.type === 'PLAY_CARD' && isHost) {
                             aplicarJogada(payload.player, payload.col, payload.handIndex);
@@ -357,21 +347,66 @@
                 };
             }
 
-            // 3. ENCONTRAR PARTIDA (MATCHMAKING)
+            // 3. ENCONTRAR PARTIDA (MATCHMAKING COM RETENÇÃO)
             if (getEl('btn-matchmaking')) {
                 getEl('btn-matchmaking').onclick = () => {
-                    const code = 'MATCH' + Math.floor(Math.random() * 90 + 10);
-                    currentRoomCode = code; currentTopic = 'poker_baiano/rooms/' + code;
-                    myID = 'p1'; oppID = 'p2'; isHost = true;
+                    const btn = getEl('btn-matchmaking');
+                    btn.innerText = "PROCURANDO..."; btn.disabled = true;
 
-                    client.subscribe(currentTopic, () => {
-                        gameState.p1_online = true;
-                        getEl('lobby-step-1').style.display = 'none';
-                        const s2 = getEl('lobby-step-2');
-                        s2.style.display = 'block';
-                        s2.innerHTML = `<button class="btn-ui" onclick="location.reload()" style="position:absolute; top:10px; left:10px;">Voltar</button><h2 style="margin-top:30px;">Procurando...</h2><div class="room-code-display">${code}</div><p>Aguardando oponente entrar...</p>`;
-                        
-                        iniciarBaralhoHost();
+                    let foundExistingRoom = false;
+
+                    const handleLobbyMessage = (topic, message) => {
+                        if (topic === 'poker_baiano/matchmaking/waiting' && !foundExistingRoom) {
+                            const payloadStr = message.toString();
+                            if (payloadStr && payloadStr.length > 0) {
+                                // Encontrou uma sala já criada por outro jogador!
+                                foundExistingRoom = true;
+                                client.unsubscribe('poker_baiano/matchmaking/waiting');
+
+                                const code = payloadStr;
+                                currentRoomCode = code; currentTopic = 'poker_baiano/rooms/' + code;
+                                myID = 'p2'; oppID = 'p1'; isHost = false;
+
+                                // Limpa o canal de matchmaking para que o próximo jogador crie uma nova sala
+                                client.publish('poker_baiano/matchmaking/waiting', '', { retain: true });
+
+                                client.subscribe(currentTopic, () => {
+                                    client.publish(currentTopic, JSON.stringify({ type: 'PLAYER_JOINED', player: 'p2' }));
+                                    client.publish(currentTopic, JSON.stringify({ type: 'REQUEST_STATE' }));
+                                    startGame();
+                                    playSnd('snd-match');
+                                });
+                            }
+                        }
+                    };
+
+                    client.on('message', handleLobbyMessage);
+                    client.subscribe('poker_baiano/matchmaking/waiting', () => {
+                        // Aguarda 1 segundo para verificar se já existe uma mensagem retida no broker
+                        setTimeout(() => {
+                            if (!foundExistingRoom) {
+                                // Nenhuma sala encontrada na fila, este jogador se torna o Host (P1)
+                                foundExistingRoom = true;
+                                client.off('message', handleLobbyMessage);
+
+                                const code = 'MATCH' + Math.floor(Math.random() * 900 + 100);
+                                currentRoomCode = code; currentTopic = 'poker_baiano/rooms/' + code;
+                                myID = 'p1'; oppID = 'p2'; isHost = true;
+
+                                // Publica com retenção (retain: true) para que quem clicar depois encontre esta sala!
+                                client.publish('poker_baiano/matchmaking/waiting', code, { retain: true });
+
+                                client.subscribe(currentTopic, () => {
+                                    gameState.p1_online = true;
+                                    getEl('lobby-step-1').style.display = 'none';
+                                    const s2 = getEl('lobby-step-2');
+                                    s2.style.display = 'block';
+                                    s2.innerHTML = `<button class="btn-ui" onclick="location.reload()" style="position:absolute; top:10px; left:10px;">Voltar</button><h2 style="margin-top:30px;">Procurando...</h2><div class="room-code-display">${code}</div><p>Aguardando oponente entrar...</p>`;
+
+                                    iniciarBaralhoHost();
+                                });
+                            }
+                        }, 1000);
                     });
                 };
             }
@@ -466,16 +501,16 @@
             }
 
             function renderCol(rowId, colIdx, cards, isOpp) {
-                const slot = getEl(rowId)?.querySelector(`[data-col="${colIdx}"]`);
-                if (!slot) return;
-                slot.innerHTML = '';
+                const realSlot = getEl(rowId)?.children[colIdx];
+                if (!realSlot) return;
+                realSlot.innerHTML = '';
                 (cards || []).forEach((c, i) => {
                     const div = document.createElement('div');
                     let hidden = (colIdx == 0 && (isOpp || cards.length < 3));
                     div.className = `card-body ${c.color} ${hidden ? 'card-back' : ''}`;
                     div.style.top = (i * 60) + "px";
                     if (!hidden) div.innerHTML = getCardInner(c.v, c.s);
-                    slot.appendChild(div);
+                    realSlot.appendChild(div);
                 });
             }
         });
