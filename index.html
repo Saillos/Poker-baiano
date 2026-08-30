@@ -219,12 +219,12 @@
             if(getEl('btn-fechar-regras')) getEl('btn-fechar-regras').onclick = fecharRegras;
             if(getEl('btn-entendi-regras')) getEl('btn-entendi-regras').onclick = fecharRegras;
 
-            // STUN Servers para garantir ultrapassagem de NAT / Roteador
             const peerOptions = {
                 config: {
                     iceServers: [
                         { urls: 'stun:stun.l.google.com:19302' },
-                        { urls: 'stun:stun1.l.google.com:19302' }
+                        { urls: 'stun:stun1.l.google.com:19302' },
+                        { urls: 'stun:stun2.l.google.com:19302' }
                     ]
                 }
             };
@@ -241,13 +241,15 @@
 
             function playSnd(id) { const el = getEl(id); if (el) { el.currentTime = 0; el.play().catch(()=>{}); } }
 
-            // BOTÃO CRIAR SALA
+            // BOTÃO CRIAR SALA (HOST)
             if(getEl('btn-criar-sala')) {
                 getEl('btn-criar-sala').onclick = () => {
                     const code = Math.random().toString(36).substring(2, 7).toUpperCase();
                     currentRoomCode = code; myID = 'p1'; oppID = 'p2'; isHost = true;
 
-                    peer = new Peer('TRINCA-' + code, peerOptions);
+                    const peerId = 'trinca-' + code.toLowerCase();
+                    peer = new Peer(peerId, peerOptions);
+
                     peer.on('open', () => {
                         getEl('lobby-step-1').style.display = 'none';
                         const s2 = getEl('lobby-step-2');
@@ -258,15 +260,13 @@
                     peer.on('connection', c => {
                         conn = c;
                         attachConnectionListeners();
-                        startGame();
-                        iniciarBaralhoHost();
                     });
 
                     peer.on('error', err => alert("Erro PeerJS ao criar sala: " + err.type));
                 };
             }
 
-            // BOTÃO ENTRAR EM SALA
+            // BOTÃO ENTRAR EM SALA (CLIENT)
             if(getEl('btn-entrar-sala')) {
                 getEl('btn-entrar-sala').onclick = () => {
                     getEl('lobby-step-1').style.display = 'none';
@@ -275,8 +275,10 @@
                     s2.innerHTML = `<h2>ENTRAR NA SALA</h2><input type="text" id="in-code" class="lobby-input" placeholder="CÓDIGO"><button class="lobby-btn lobby-btn-create" style="margin-top:15px;" id="go">ENTRAR</button><div id="connect-status" style="margin-top:10px; font-size:12px; color:var(--accent);"></div>`;
 
                     getEl('go').onclick = () => {
-                        const code = getEl('in-code').value.trim().toUpperCase();
-                        if (!code) return alert("Digite o código da sala!");
+                        const rawCode = getEl('in-code').value.trim();
+                        if (!rawCode) return alert("Digite o código da sala!");
+                        
+                        const code = rawCode.toUpperCase();
                         currentRoomCode = code; myID = 'p2'; oppID = 'p1'; isHost = false;
 
                         const statusDiv = getEl('connect-status');
@@ -285,14 +287,16 @@
 
                         peer = new Peer(peerOptions);
                         peer.on('open', () => {
-                            conn = peer.connect('TRINCA-' + code, { reliable: true });
+                            const targetPeerId = 'trinca-' + code.toLowerCase();
+                            conn = peer.connect(targetPeerId, { reliable: true });
                             attachConnectionListeners();
                         });
 
                         peer.on('error', err => {
                             getEl('go').disabled = false;
+                            if (statusDiv) statusDiv.innerText = "";
                             if (err.type === 'peer-unavailable') {
-                                alert("Sala não encontrada! Verifique o código e certifique-se de que o Host abriu a sala.");
+                                alert("Sala não encontrada! Verifique se o código está correto e se o Host abriu a sala primeiro.");
                             } else {
                                 alert("Erro de conexão P2P: " + err.type);
                             }
@@ -305,17 +309,31 @@
                 const handleOpen = () => {
                     startGame();
                     playSnd('snd-match');
+
+                    if (isHost) {
+                        iniciarBaralhoHost();
+                    } else {
+                        conn.send({ type: 'REQUEST_STATE' });
+                    }
                 };
 
-                if (conn.open) {
+                if (conn && conn.open) {
                     handleOpen();
-                } else {
+                } else if (conn) {
                     conn.on('open', handleOpen);
                 }
 
                 conn.on('data', data => {
-                    if (data.type === 'STATE_UPDATE') { gameState = data.state; renderGame(); }
-                    else if (data.type === 'PLAY_CARD' && isHost) { aplicarJogada(data.player, data.col, data.handIndex); }
+                    if (data.type === 'STATE_UPDATE') { 
+                        gameState = data.state; 
+                        renderGame(); 
+                    }
+                    else if (data.type === 'REQUEST_STATE' && isHost) {
+                        syncHostState();
+                    }
+                    else if (data.type === 'PLAY_CARD' && isHost) { 
+                        aplicarJogada(data.player, data.col, data.handIndex); 
+                    }
                 });
 
                 conn.on('close', () => {
@@ -344,7 +362,9 @@
             }
 
             function syncHostState() {
-                if (isHost && conn && conn.open) conn.send({ type: 'STATE_UPDATE', state: gameState });
+                if (isHost && conn && conn.open) {
+                    conn.send({ type: 'STATE_UPDATE', state: gameState });
+                }
                 renderGame();
             }
 
